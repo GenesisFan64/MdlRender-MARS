@@ -47,7 +47,7 @@ GmMode_0:
 .ntsc:
 		bsr	Video_Update
 	; Init
-		bsr	Mde0_Mars_Init
+; 		bsr	Mde0_Mars_Init
 		lea	ASCII_PAL(pc),a0
 		moveq	#$30,d0
 		move.w	#$F,d1
@@ -65,82 +65,82 @@ GmMode_0:
 .loop:
 		bsr	System_VSync
 
-		lea	Str_hello(pc),a0
-		move.l	#locate(0,0,0),d0
+		lea	str_Title(pc),a0
+		move.l	#locate(0,0,26),d0
 		bsr	Video_Print
-
-		lea	(sysmars_reg),a6
-		lea	(GmMd0_Models),a5
-		moveq	#0,d7
-		move.w	(Controller_1+on_hold).w,d0
-		move.w	d0,d1
-		lsr.w	#8,d1
-
-		btst	#bitJoyMode,d1
-		beq.s	.hmode
-		moveq	#0,d4
-		move.w	d4,mdmdl_x(a5)
-		move.w	d4,mdmdl_y(a5)
-		move.w	d4,mdmdl_z(a5)
-		move.w	d4,mdmdl_x_rot(a5)
-		move.w	d4,mdmdl_y_rot(a5)
-		move.w	d4,mdmdl_z_rot(a5)
-		moveq	#1,d7
-.hmode:
-		move.w	(Controller_1+on_press),d2
-		btst	#bitJoyStart,d2
-		beq.s	.lel
-		bsr	Mde0_Mars_TEST
-.lel:
-
-	; button hold
-		btst	#bitJoyLeft,d0
-		beq.s	.hleft
-		add.w	#4,mdmdl_x(a5)
-		moveq	#1,d7
-.hleft:
-		btst	#bitJoyRight,d0
-		beq.s	.hright
-		sub.w	#4,mdmdl_x(a5)
-		moveq	#1,d7
-.hright:
-		btst	#bitJoyUp,d0
-		beq.s	.hup
-		add.w	#4,mdmdl_y(a5)
-		moveq	#1,d7
-.hup:
-		btst	#bitJoyDown,d0
-		beq.s	.hdown
-		sub.w	#4,mdmdl_y(a5)
-		moveq	#1,d7
-.hdown:
-		btst	#bitJoyZ,d1
-		beq.s	.hz
-		add.w	#4,mdmdl_z(a5)
-		moveq	#1,d7
-.hz:
-		btst	#bitJoyC,d0
-		beq.s	.hc
-		sub.w	#4,mdmdl_z(a5)
-		moveq	#1,d7
-.hc:
-
-	; ROTATE
-		btst	#bitJoyA,d0
-		beq.s	.ha
-		add.w	#4,mdmdl_x_rot(a5)
-		moveq	#1,d7
-.ha:
-		btst	#bitJoyB,d0
-		beq.s	.hb
-		sub.w	#4,mdmdl_x_rot(a5)
-		moveq	#1,d7
-.hb:
-
-		tst.w	d7
-		beq	.loop
-
-		bsr	Mde0_Mars_Move
+; 
+; 		lea	(sysmars_reg),a6
+; 		lea	(GmMd0_Models),a5
+; 		moveq	#0,d7
+; 		move.w	(Controller_1+on_hold).w,d0
+; 		move.w	d0,d1
+; 		lsr.w	#8,d1
+; 
+; 		btst	#bitJoyMode,d1
+; 		beq.s	.hmode
+; 		moveq	#0,d4
+; 		move.w	d4,mdmdl_x(a5)
+; 		move.w	d4,mdmdl_y(a5)
+; 		move.w	d4,mdmdl_z(a5)
+; 		move.w	d4,mdmdl_x_rot(a5)
+; 		move.w	d4,mdmdl_y_rot(a5)
+; 		move.w	d4,mdmdl_z_rot(a5)
+; 		moveq	#1,d7
+; .hmode:
+; 		move.w	(Controller_1+on_press),d2
+; 		btst	#bitJoyStart,d2
+; 		beq.s	.lel
+; 		bsr	Mde0_Mars_TEST
+; .lel:
+; 
+; 	; button hold
+; 		btst	#bitJoyLeft,d0
+; 		beq.s	.hleft
+; 		add.w	#4,mdmdl_x(a5)
+; 		moveq	#1,d7
+; .hleft:
+; 		btst	#bitJoyRight,d0
+; 		beq.s	.hright
+; 		sub.w	#4,mdmdl_x(a5)
+; 		moveq	#1,d7
+; .hright:
+; 		btst	#bitJoyUp,d0
+; 		beq.s	.hup
+; 		add.w	#4,mdmdl_y(a5)
+; 		moveq	#1,d7
+; .hup:
+; 		btst	#bitJoyDown,d0
+; 		beq.s	.hdown
+; 		sub.w	#4,mdmdl_y(a5)
+; 		moveq	#1,d7
+; .hdown:
+; 		btst	#bitJoyZ,d1
+; 		beq.s	.hz
+; 		add.w	#4,mdmdl_z(a5)
+; 		moveq	#1,d7
+; .hz:
+; 		btst	#bitJoyC,d0
+; 		beq.s	.hc
+; 		sub.w	#4,mdmdl_z(a5)
+; 		moveq	#1,d7
+; .hc:
+; 
+; 	; ROTATE
+; 		btst	#bitJoyA,d0
+; 		beq.s	.ha
+; 		add.w	#4,mdmdl_x_rot(a5)
+; 		moveq	#1,d7
+; .ha:
+; 		btst	#bitJoyB,d0
+; 		beq.s	.hb
+; 		sub.w	#4,mdmdl_x_rot(a5)
+; 		moveq	#1,d7
+; .hb:
+; 
+; 		tst.w	d7
+; 		beq	.loop
+; 
+; 		bsr	Mde0_Mars_Move
 		bra	.loop
 		
 ; ====================================================================
@@ -221,9 +221,15 @@ Mde0_Mars_TEST:
 ; ------------------------------------------------------
 
 		align 2
-Str_hello:	dc.b "Hello MARS!, Frames: \\l",$A
-		dc.b "Input: \\w \\w \\w \\w",0
+str_Title:	dc.b "\\w \\w \\w \\w",$A
+		dc.b "\\w \\w \\w \\w   MD Frames \\l",0
+		dc.l sysmars_reg+comm0
+		dc.l sysmars_reg+comm2
+		dc.l sysmars_reg+comm4
+		dc.l sysmars_reg+comm6
+		dc.l sysmars_reg+comm8
+		dc.l sysmars_reg+comm10
+		dc.l sysmars_reg+comm12
+		dc.l sysmars_reg+comm14
 		dc.l RAM_FrameCount
-		dc.l Controller_1+on_hold,Controller_1+on_press
-		dc.l Controller_2+on_hold,Controller_2+on_press
-		align 2
+		align 4

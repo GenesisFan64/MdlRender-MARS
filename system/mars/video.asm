@@ -147,51 +147,29 @@ MarsVideo_Init:
 ; Video render (polygons)
 ; ----------------------------------------------------------------
 
-MarsVideo_Render:
-		sts	pr,@-r15
-		mov 	#MARSMdl_ZList,r2
-.next:
-		mov	@r2,r0
-		cmp/eq	#0,r0
-		bt	.finish
-		bsr	MarsVideo_DrwPoly
-		mov	r0,r1
-.off:
-		bra	.next
-		add 	#8,r2
-.finish:
-
-	; Reset mdl face counter
-		mov	#MARSMdl_FaceCnt,r2
-		mov	#0,r0
-		mov	r0,@r2
-
-		lds	@r15+,pr
-		rts
-		nop
-		align 4
-		ltorg
-
-; OLD METHOD
-; 		mov 	#MARSVid_Polygns,r1
+; MarsVideo_Render:
+; 		sts	pr,@-r15
+; 		mov 	#MARSMdl_ZList,r2
 ; .next:
-; 		mov	@(polygn_type,r1),r0
+; 		mov	@r2,r0
 ; 		cmp/eq	#0,r0
 ; 		bt	.finish
-; 		cmp/eq	#-1,r0
-; 		bt	.off
 ; 		bsr	MarsVideo_DrwPoly
-; 		nop
+; 		mov	r0,r1
 ; .off:
 ; 		bra	.next
-; 		add 	#sizeof_polygn,r1
+; 		add 	#8,r2
 ; .finish:
+; 		lds	@r15+,pr
+; 		rts
+; 		nop
+; 		align 4
+; 		ltorg
 
 ; ====================================================================
 ; ----------------------------------------------------------------
 ; Video subroutines
 ; ----------------------------------------------------------------
-
 
 ; --------------------------------------------------------
 ; MarsVideo_DrwPoly
@@ -1031,6 +1009,9 @@ MarsMdl_Init:
 
 MarsMdl_Run:
 		sts	pr,@-r15
+		mov	#MARSMdl_FaceCnt,r2
+		mov	#0,r0
+		mov	r0,@r2
 		mov 	#MARSMdl_Objects,r14
 .loop:
 		mov	@(mdl_data,r14),r0
@@ -1061,11 +1042,9 @@ MarsMdl_Run:
 		bt	.exit
 		cmp/pl	r10			; out of faces?
 		bf	.exit
-
 		mov	@r14,r0			; grab Z pos
 		cmp/eq	#0,r0			; 0 - endoflist
 		bf	.nores
-		
 		mov	#MARSMdl_ZList+4,r14	; Z list
 		mov	#MARSVid_Polygns,r12	; polygon list
 		bra	.next
@@ -1436,7 +1415,7 @@ mdlrd_calcpersp:
 		sts	macl,r3		; new Y
 
 	; Z fix
-		mov	#96,r0
+		mov	#84,r0
 		add 	r0,r4
 		rts
 		nop

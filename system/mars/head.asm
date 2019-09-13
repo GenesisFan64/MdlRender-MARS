@@ -131,8 +131,14 @@ MARS_Entry:
 		move.l	d0,comm0(a5)
 		move.l	d0,comm4(a5)
 		bsr	MD_Init
-		bset	#bitMars,(RAM_SysFlags).l
-		bra	MD_Main
+		
+		lea	Engine_Code(pc),a0
+		lea	($FF0000),a1
+		move.w	#Engine_Code_end-Engine_Code/2,d0
+.copyme:
+		move.w	(a0)+,(a1)+
+		dbf	d0,.copyme
+		jmp	(MD_Main).l
 
 ; --------------------------------------------------------
 ; No MARS detected
@@ -141,8 +147,7 @@ MARS_Entry:
 .no_mars:
 		move.w	#$2700,sr
 		bsr	MD_Init
-		bclr	#bitMars,(RAM_SysFlags).l
-		bra	MD_Main
+		bra.s	*
 
 ; ====================================================================
 ; ----------------------------------------------------------------

@@ -129,6 +129,11 @@ SH2_M_HotStart:
 		mov	#_CCR,r1
 		mov	#$19,r0
 		mov.w	r0,@r1
+		mov	#VIRQ_ON|CMDIRQ_ON,r0
+    		mov.b	r0,@(intmask,gbr)
+		mov	#$20,r0
+		ldc	r0,sr
+
 ; 		mov 	#CACHE_DATA,r1
 ; 		mov 	#$C0000000,r2
 ; 		mov 	#(CACHE_END-CACHE_START)/4,r3
@@ -143,71 +148,114 @@ SH2_M_HotStart:
 ; Init
 ; --------------------------------------------------------
 
-		bsr	MarsVideo_Init
-		nop
-		bsr	MarsMdl_Init
-		nop
-
 		mov 	#TEST_PICTURPAL,r1
 		mov 	#256,r3
 		bsr	MarsVideo_LoadPal
 		mov 	#0,r2
 
-		mov	#VIRQ_ON|CMDIRQ_ON,r0
-    		mov.b	r0,@(intmask,gbr)
-		mov	#$20,r0
-		ldc	r0,sr
-
-		bsr	MarsVideo_ClearFrame
-		nop
-
-; 		mov 	#MARSMdl_Objects,r1
-; 		mov	@(mdl_z,r1),r0
-; 		mov 	#-1024,r2
-; 		add	r2,r0
-; 		mov	r0,@(mdl_z,r1)
-		
 ; --------------------------------------------------------
 ; Loop
 ; --------------------------------------------------------
 
-		mov 	#0,r0
-.loop:
-		bsr	MarsVideo_SwapFrame	; FB SWAP request
-		nop
+master_loop:
+		mov 	#MARSMdl_Objects,r4
+		mov 	#$100,r5		; speed
 		
-; ------------------------------------------------
-; Check command
-; ------------------------------------------------
+	; X Y Z
+		mov 	@(mdl_z,r4),r1
+		mov	#MARS_Controller_1,r0
+		mov	@r0,r0
+		mov 	#JoyZ,r3
+		and 	r3,r0
+		cmp/eq	r3,r0
+		bf	.no_z
+		add 	r5,r1
+.no_z:
+		mov	#MARS_Controller_1,r0
+		mov	@r0,r0
+		and	#JoyC,r0
+		tst	r0,r0
+		bt	.no_c
+		sub 	r5,r1
+.no_c:
+		mov 	r1,@(mdl_z,r4)
+		
+		mov 	@(mdl_x,r4),r1
+		mov 	@(mdl_y,r4),r2
+		mov	#MARS_Controller_1,r0
+		mov	@r0,r0
+		and	#JoyUp,r0
+		tst	r0,r0
+		bt	.no_u
+		add 	r5,r2
+.no_u:
+		mov	#MARS_Controller_1,r0
+		mov	@r0,r0
+		and	#JoyDown,r0
+		tst	r0,r0
+		bt	.no_d
+		sub 	r5,r2
+.no_d:
+		mov	#MARS_Controller_1,r0
+		mov	@r0,r0
+		and	#JoyLeft,r0
+		tst	r0,r0
+		bt	.no_l
+		add 	r5,r1
+.no_l:
+		mov	#MARS_Controller_1,r0
+		mov	@r0,r0
+		and	#JoyRight,r0
+		tst	r0,r0
+		bt	.no_r
+		sub 	r5,r1
+.no_r:
+		mov 	r1,@(mdl_x,r4)
+		mov 	r2,@(mdl_y,r4)
+		
+	; ROTATE
+		mov 	@(mdl_x_rot,r4),r1
+		mov	#MARS_Controller_1,r0
+		mov	@r0,r0
+		mov 	#JoyA,r3
+		and 	r3,r0
+		cmp/eq	r3,r0
+		bf	.no_a
+		add 	r5,r1
+.no_a:
+		mov	#MARS_Controller_1,r0
+		mov	@r0,r0
+		and	#JoyB,r0
+		tst	r0,r0
+		bt	.no_b
+		sub 	r5,r1
+.no_b:
+		mov 	r1,@(mdl_x_rot,r4)
 
-		mov.b	@(comm14,gbr),r0
+; Wait VBLANK
+		mov 	#1,r0
+		mov	#MarsVid_VIntBit,r1
+		mov 	r0,@r1
+.wait_v:
+		mov	@r1,r0
 		cmp/eq	#0,r0
-		bt	.no_task
-		shll2	r0
-		mov	#Mstr_MD_Tasks,r1
-		mov	@(r1,r0),r0
-		jsr	@r0
-		nop
-		mov 	#0,r0
-		mov.b	r0,@(comm14,gbr)
-.no_task:
+		bf	.wait_v
+		mov.w 	@(comm0,gbr),r0
+		add 	#1,r0
+		mov.w 	r0,@(comm0,gbr)
+		mov.w 	@(comm10,gbr),r0
+		cmp/eq	#1,r0
+		bt	master_loop
 
-; ------------------------------------------------
-
-		bsr	MarsMdl_Run		; Read models and build faces
+		mov 	#1,r0
+		mov.w	r0,@(comm10,gbr)
+		mov.w 	@(comm2,gbr),r0
+		add 	#1,r0
+		mov.w 	r0,@(comm2,gbr)
+		bra	master_loop
 		nop
-
-; ------------------------------------------------
-
-		bsr	MarsVideo_WaitFrame	; Wait swap
-		nop
-		bsr	MarsVideo_ClearFrame
-		nop
-		bsr	MarsVideo_Render
-		nop
-		
-		bra	.loop
-		nop
+		align 4
+		ltorg
 
 ; ====================================================================
 ; ----------------------------------------------------------------
@@ -567,6 +615,29 @@ m_irq_v:
 		mov	@r15+,r3
 		mov	@r15+,r2
 
+		mov	#$FFFF,r2
+		mov	#MarsSys_Input,r3
+		mov.w 	@(comm14,gbr),r0
+		mov 	r0,r4
+		mov.w 	@(comm12,gbr),r0
+		and	r2,r0
+		mov	@r3,r1
+		xor	r0,r1
+		mov	r0,@r3
+		and	r0,r1
+		mov	r1,@(4,r3)
+		add 	#8,r3
+		mov 	r0,r4
+		and	r2,r0
+		mov	@r3,r1
+		xor	r0,r1
+		mov	r0,@r3
+		and	r0,r1
+		mov	r1,@(4,r3)
+
+		mov 	#0,r0
+		mov	#MarsVid_VIntBit,r1
+		mov 	r0,@r1
 		rts
 		nop
 		align 4
@@ -685,7 +756,10 @@ SH2_S_Entry:
 SH2_S_HotStart:
 		mov	#$F0,r0
 		ldc	r0,sr
-		mov	#CMDIRQ_ON|PWMIRQ_ON,r0
+		mov	#_CCR,r1
+		mov	#$19,r0
+		mov.w	r0,@r1
+		mov	#CMDIRQ_ON,r0
     		mov.b	r0,@(intmask,gbr)
 		mov	#$20,r0
 		ldc	r0,sr
@@ -704,18 +778,67 @@ SH2_S_HotStart:
 
 		bsr	MarsSound_Init
 		nop
-
-; --------------------------------------------------------
-; Loop
-; --------------------------------------------------------
-
-		mov 	#0,r0
-.loop:
+		bsr	MarsVideo_Init
 		nop
+		bsr	MarsMdl_Init
+		nop
+		mov 	#TEST_MODEL,r1
+		mov 	#MARSMdl_Objects,r3
+		add 	r0,r3
+		mov 	r1,@(mdl_data,r3)
+		mov 	#0,r0
+		mov 	r0,@(mdl_x,r3)
+		mov 	r0,@(mdl_y,r3)
+		mov 	r0,@(mdl_z,r3)
+
+; --------------------------------------------------------
+; Loopf
+; --------------------------------------------------------
+
+slave_loop:
+		mov.w 	@(comm10,gbr),r0
+		cmp/eq	#0,r0
+		bt	slave_loop
+
+		bsr	MarsVideo_SwapFrame	; FB SWAP request
+		nop
+		bsr	MarsMdl_Run		; Read models and build faces
+		nop
+		bsr	MarsVideo_WaitFrame	; Wait swap
+		nop
+		bsr	MarsVideo_ClearFrame
 		nop
 		
-		bra	.loop
+	; -----------------------------------
+	; Render polygons
+	; -----------------------------------
+		mov 	#MARSMdl_ZList,r2
+.next:
+		mov	@r2,r0
+		cmp/eq	#0,r0
+		bt	.finish
+		bsr	MarsVideo_DrwPoly
+		mov	r0,r1
+		mov	#0,r0
+		mov 	r0,@r2
+		mov 	r0,@(4,r2)
+.off:
+		bra	.next
+		add 	#8,r2
+.finish:
+
+	; -----------------------------------
+	
+		mov 	#0,r0
+		mov.w 	r0,@(comm10,gbr)
+		
+		mov.w 	@(comm4,gbr),r0
+		add 	#1,r0
+		mov.w 	r0,@(comm4,gbr)
+		bra	slave_loop
 		nop
+		align 4
+		ltorg
 
 ; ====================================================================
 ; ----------------------------------------------------------------
@@ -981,8 +1104,9 @@ MARSRAM_Sound	ds.b (sizeof_marssnd-MARSRAM_Sound)
 sizeof_marsram	ds.l 0
 	endif
 
+.here:
 	if MOMPASS=7
-		message "MARS RAM ends at: \{((sizeof_marsram)&$FFFFFF)}"
+		message "MARS RAM from \{((SH2_RAM)&$FFFFFF)} to \{((.here)&$FFFFFF)}"
 	endif
 		finish
 		
@@ -992,6 +1116,7 @@ sizeof_marsram	ds.l 0
 ; ----------------------------------------------------------------
 
 		struct MARSRAM_System
+MarsSys_Input	ds.l 4
 MARSSys_MdReq	ds.l 1
 sizeof_marssys	ds.l 0
 		finish
@@ -1013,12 +1138,22 @@ sizeof_marssnd	ds.l 0
 
 		struct MARSRAM_Video
 MARSVid_LastFb	ds.l 1
+MarsVid_VIntBit	ds.l 1
+MARSMdl_FaceCnt	ds.l 1
+MARSMdl_OutPnts ds.l 3*MAX_VERTICES			; Output vertices for reading
+MARSMdl_ZList	ds.l 2*MAX_POLYGONS			; Polygon address | Polygon Z pos
 MARSVid_Palette	ds.w 256
 MARSVid_Polygns	ds.b sizeof_polygn*MAX_POLYGONS		; Polygon data
 MARSMdl_Playfld	ds.b sizeof_plyfld			; Playfield buffer (or camera)
 MARSMdl_Objects	ds.b sizeof_mdl*MAX_MODELS
-MARSMdl_OutPnts ds.l 3*MAX_VERTICES			; Output vertices for reading
-MARSMdl_ZList	ds.l 2*MAX_POLYGONS			; Polygon address | Polygon Z pos
-MARSMdl_FaceCnt	ds.l 1
 sizeof_marsvid	ds.l 0
 		finish
+
+; --------------------------------------------------------
+; Alias
+; --------------------------------------------------------
+
+MARS_Controller_1	equ	MarsSys_Input
+MARS_Controller_2	equ	MarsSys_Input+8
+marspad_onhold		equ	0
+marspad_onpress		equ	4
