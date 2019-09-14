@@ -1098,17 +1098,16 @@ persp_max	binclude "system/mars/data/perspdata_max.bin"
 ; MARS User data
 ; ----------------------------------------------------------------
 
-TEST_PICTURPAL:	binclude "engine/modes/title/mars/data/mtrl/logos_pal.bin"
+TEST_PICTURPAL:	binclude "engine/modes/title/mars/data/mtrl/grass_pal.bin"
 		align 4
 
 TEST_MODEL:
-		binclude "engine/modes/title/mars/data/test_head.bin"
-		dc.l .vert,.face	; vertices, faces
-		dc.l .vrtx,.mtrl	; vertex, material list
-.vert:		binclude "engine/modes/title/mars/data/test_vert.bin"
-.face:		binclude "engine/modes/title/mars/data/test_face.bin"
-.vrtx:		binclude "engine/modes/title/mars/data/test_vrtx.bin"
-.mtrl:		include "engine/modes/title/mars/data/test_mtrl.asm"
+		binclude "engine/modes/title/mars/data/floor_head.bin"
+		dc.l .vert,.face,.vrtx,.mtrl	; vertices, faces, vertex, material
+.vert:		binclude "engine/modes/title/mars/data/floor_vert.bin"
+.face:		binclude "engine/modes/title/mars/data/floor_face.bin"
+.vrtx:		binclude "engine/modes/title/mars/data/floor_vrtx.bin"
+.mtrl:		include "engine/modes/title/mars/data/floor_mtrl.asm"
 
 ; ====================================================================
 ; ----------------------------------------------------------------

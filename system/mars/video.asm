@@ -1051,6 +1051,7 @@ make_model:
 		mov	@(plyfld_z,r13),r5	
 		mov	@(mdl_z,r14),r0
 		shlr8	r0
+		shll	r0
 		exts	r0,r0
 		add 	r0,r4
 		add 	r5,r4
@@ -1333,22 +1334,6 @@ make_model:
 ; this method sucks
 
 mdlrd_calcpersp:
-; 		mov	r4,r0
-; 		mov	#persp_max,r7
-; 		cmp/pl	r0
-; 		bt	.cont
-; 		neg	r0,r0
-; 		mov	#persp_min,r7
-; .cont:
-; 		shll2	r0
-; 		mov 	@(r0,r7),r0
-; 		muls	r0,r2
-; 		sts	macl,r2		; new X
-; 		muls	r0,r3
-; 		sts	macl,r3		; new Y
-; 		rts
-; 		nop
-		
 		mov	#384*256,r7
 		mov	r4,r0
 		exts	r0,r0
