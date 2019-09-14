@@ -832,7 +832,9 @@ list_vdpregs:
 		dc.b $00
 		dc.b $00
 		align 2
-ASCII_PAL:	binclude "engine/shared/ascii_pal.bin"
+ASCII_PAL:	;binclude "engine/shared/ascii_pal.bin"
+		dc.w $0000,$0EEE,$0CCC,$0AAA,$0888,$0444,$000E,$0008
+		dc.w $00EE,$0088,$00E0,$0080,$0E00,$0800,$0000,$0000
 ASCII_PAL_e:
 ASCII_FONT:	binclude "engine/shared/ascii_font.bin"
 ASCII_FONT_e:

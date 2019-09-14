@@ -82,7 +82,6 @@ while reading:
       x=float(point[0])*SCALE_SIZE
       y=(float(point[1])*SCALE_SIZE)
       z=float(point[2])*SCALE_SIZE
-
       mars_x=int(x)*-1
       mars_z=int(z)
       mars_y=int(y)+(int(INCR_Y)*-1)

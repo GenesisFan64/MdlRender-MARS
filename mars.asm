@@ -72,6 +72,8 @@ Textr_uslogo:	binclude "engine/modes/title/mars/data/mtrl/logos.bin"
 		align 4
 Textr_grass:	binclude "engine/modes/title/mars/data/mtrl/grass_art.bin"
 		align 4
+Textr_semaf:	binclude "engine/modes/title/mars/data/mtrl/semf_art.bin"
+		align 4
 		
 ; ---------------------------------------------
 		dephase

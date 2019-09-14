@@ -18,7 +18,7 @@
 MAX_VERTICES	equ	2048
 MAX_POLYGONS	equ	512
 MAX_MODELS	equ	24
-MAX_ZDISTANCE	equ	-128		; lower distance, more stable
+MAX_ZDISTANCE	equ	-192		; lower distance, more stable
 
 ; ----------------------------------------
 ; Variables
@@ -181,7 +181,6 @@ MarsVideo_Init:
 MarsVideo_DrwPoly:
 		sts	pr,@-r15
 
-	; TOP/BOTTOM Y
 		mov 	#$7FFFFFFF,r11		; lowest Y
 		mov 	#$FFFFFFFF,r12		; top Y
 		mov 	@(polygn_type,r1),r0	; numof_points & $FF
@@ -191,7 +190,6 @@ MarsVideo_DrwPoly:
 		cmp/eq	#4,r0
 		bf	.exit
 .valid:
-
 		mov	#$FFFF,r6
 		mov 	r0,r7
 		mov 	r1,r8
@@ -265,10 +263,14 @@ MarsVideo_DrwPoly:
 	; r10 - Right height
 	; r11 - Current Y
 	; r12 - End Y
-	; r13 - left dda
-	; r14 - right dda
+	; r13 - Left dda buffer
+	; r14 - Right dda buffer
 		mov	#PolyRndr_Left,r13
 		mov	#PolyRndr_Right,r14
+		mov	@(plydda_src_x,r13),r3
+		mov	@(plydda_src_x,r14),r4
+		mov	@(plydda_src_y,r13),r5
+		mov	@(plydda_src_y,r14),r6
 		mov 	@(plydda_x,r13),r7	; start X
 		mov 	@(plydda_x,r14),r8	; end X
 		mov 	@(plydda_h,r13),r9
@@ -288,37 +290,32 @@ MarsVideo_DrwPoly:
 		add 	r0,r7
 		mov 	@(plydda_dx,r14),r0
 		add 	r0,r8
-
-		mov	@(plydda_src_x,r13),r0
-		mov	@(plydda_src_y,r13),r3
-		mov 	@(plydda_src_dx,r13),r4
-		mov 	@(plydda_src_dy,r13),r5
-		add 	r4,r0
-		add 	r5,r3
-		mov	r0,@(plydda_src_x,r13)
-		mov	r3,@(plydda_src_y,r13)
-		mov	@(plydda_src_x,r14),r0
-		mov	@(plydda_src_y,r14),r3
-		mov 	@(plydda_src_dx,r14),r4
-		mov 	@(plydda_src_dy,r14),r5
-		add 	r4,r0
-		add 	r5,r3
-		mov	r0,@(plydda_src_x,r14)
-		mov	r3,@(plydda_src_y,r14)
+		mov 	@(plydda_src_dx,r13),r0
+		add 	r0,r3
+		mov 	@(plydda_src_dx,r14),r0
+		add 	r0,r4
+		mov 	@(plydda_src_dy,r13),r0
+		add 	r0,r5
+		mov 	@(plydda_src_dy,r14),r0
+		add 	r0,r6
 
 		add 	#-1,r9			; Decrement line
 		add 	#-1,r10
 		cmp/pl	r9
 		bt	.lk
 		add	#sizeof_plydda,r13
-		mov 	@(plydda_h,r13),r9
+		mov	@(plydda_src_x,r13),r3
+		mov	@(plydda_src_y,r13),r5
 		mov 	@(plydda_x,r13),r7
+		mov 	@(plydda_h,r13),r9
 .lk
 		cmp/pl	r10
 		bt	.rk
 		add	#sizeof_plydda,r14
-		mov 	@(plydda_h,r14),r10
+		mov	@(plydda_src_x,r14),r4
+		mov	@(plydda_src_y,r14),r6
 		mov 	@(plydda_x,r14),r8
+		mov 	@(plydda_h,r14),r10	
 .rk
 	; Next Y
 		bra	.yloop
@@ -341,322 +338,261 @@ MarsVideo_DrwPoly:
 
 drwpoly_line:
 		mov	@(polygn_mtrl,r1),r0
-		mov 	#$FFFF0000,r3
-		and	r3,r0
+		shlr16	r0
 		cmp/eq	#0,r0
-		bf	.has_texture
+		bf	drwpoly_texture
 
 ; ----------------------------------------
 ; Solid color
 ; ----------------------------------------
 
 .solid_color:
-		mov 	r7,r3
-		mov 	r8,r0
-		shlr16	r0
-		shlr16	r3
-		exts	r0,r0
-		exts	r3,r3
-		mov 	r3,r4
-		mov 	r0,r5
+		mov 	r1,@-r15
+		mov 	r2,@-r15
+		mov 	r3,@-r15
+		mov 	r4,@-r15
+		mov 	r5,@-r15
+		mov 	r6,@-r15
+		mov 	r7,@-r15
+		mov 	r8,@-r15
 		
-		sub 	r3,r0
+		shlr16	r7
+		exts	r7,r7
+		shlr16	r8
+		exts	r8,r8
+ 		mov	r7,r0
+ 		sub 	r8,r0
+ 		cmp/pl	r0
+ 		bf	.revsolid
+		mov	r7,r0		; swap dest X
+		mov	r8,r3
+		mov 	r3,r7
+		mov	r0,r8
+.revsolid:
+		cmp/pl	r11
+		bf	.exits
+		mov	r8,r0
+		sub	r7,r0
 		cmp/pl	r0
-		bt	.plus
-		mov 	r4,r0		; reverse line
-		mov 	r5,r3
-		mov 	r3,r4
-		mov 	r0,r5
-.plus:
-	; r4 - left
-	; r5 - right
-; 		mov	#SCREEN_WIDTH,r0
-; 		cmp/gt	r0,r5
-; 		bt	.bad
-; 		cmp/pl	r5
-; 		bt	.bad
-; 		mov 	#2,r6
-; 		mov 	r5,r0
-; 		sub 	r4,r0
-; 		cmp/ge	r6,r0
-; 		bf	.bad
+		bf	.exits
+		cmp/eq	#1,r0
+		bt	.exits
 
-		mov 	#_overwrite+$200,r6
-		mov 	r11,r0
-		shll8	r0
-		shll	r0
-		add 	r0,r6
+	; X crop
+		cmp/pl	r7
+		bt	.leftoks
+		mov	#0,r7
+.leftoks:
+		mov 	#SCREEN_WIDTH,r0
+		cmp/gt	r0,r8
+		bf	.rghtoks
+		mov	r0,r8
+.rghtoks:
 
-	; Left
-		mov 	r4,r0			; r4 - X
-		cmp/pl	r0			; < 0
-		bf	.min_l
-		mov 	#SCREEN_WIDTH,r3	; > 320
-		cmp/ge	r3,r0
-		bt	.min_l
-		mov 	@(polygn_mtrl,r1),r3
-		mov 	@(polygn_mtrlopt,r1),r0
-		add 	r0,r3
-		mov 	r3,r0
-		shll8	r0
-		or	r0,r3			; $xxxx
-		mov 	r4,r0
-		and 	#1,r0
-		cmp/eq	#0,r0
-		bt	.ful_l
-		shlr8	r3			; $00xx
-.ful_l:
-		mov 	#-2,r0
-		and	r0,r4			; x & $FFFE
-		mov 	r4,r0
-		mov.w 	r3,@(r0,r6)
-.min_l:
-
-; 	Right
-		mov 	r5,r0
-		cmp/pl	r0
-		bf	.min_r
-		mov 	#SCREEN_WIDTH,r3
-		cmp/ge	r3,r0
-		bt	.min_r
-		mov 	@(polygn_mtrl,r1),r3
-		mov 	@(polygn_mtrlopt,r1),r0
-		add 	r0,r3
-		mov 	r3,r0
+	; STABLE
+		mov 	@(polygn_mtrl,r1),r0
+		mov	r0,r3
 		shll8	r0
 		or	r0,r3
-		mov 	r5,r0
-		and 	#1,r0
-		cmp/eq	#0,r0
-		bf	.ful_r
-		mov 	@(polygn_mtrl,r1),r3
-		mov 	@(polygn_mtrlopt,r1),r0
-		add 	r0,r3
-		shll8	r3
-.ful_r:
-		mov 	#-2,r0
-		and	r0,r5
-		mov 	r5,r0
-		mov.w 	r3,@(r0,r6)
-.min_r:
-
-
-; 	LINE FILL
-		mov 	#SCREEN_WIDTH,r3
-		cmp/gt	r3,r5
-		bf	.lowr
-		mov 	r3,r5
-.lowr:
-		mov 	r4,r0
-		add 	#2,r0
-		cmp/pz	r4
-		bt	.lowl
-		xor	r0,r0
-.lowl:
-		mov 	#-2,r4
-		and 	r4,r0
-		mov 	r0,r4
-		sub 	r0,r5
-		shlr	r5		; /2
-		exts	r5,r5
-		add 	#-1,r5
-		cmp/pz	r5
-		bf	.bad
-		mov 	r5,r0
-		mov 	#_vdpreg,r6
-		mov.b	r0,@(filllength,r6)
-		mov 	#$100,r0
+		
+		mov 	#-2,r2
+		mov	r8,r4
+		and 	r2,r4
+		mov 	r7,r0
+		and 	r2,r0
+		sub	r0,r4
+		cmp/pl	r4
+		bf	.exits
 		shlr	r4
-		add 	r4,r0
-		mov 	r11,r4
-		shll8	r4
-		add 	r4,r0
-		mov.w	r0,@(fillstart,r6)
-		mov 	@(polygn_mtrl,r1),r0
-		and	#$FF,r0
-		mov	r0,r3
-; 		mov 	@(polygn_mtrlopt,r1),r0
-; 		add 	r0,r3
-		mov 	r3,r0
+		mov	r11,r0
+		cmp/pl	r0
+		bf	.exits
 		shll8	r0
-		or	r3,r0
-		mov.w	r0,@(filldata,r6)
-		
-.waitfill:
-		mov.w	@(vdpsts,r6),r0
+		mov	r0,r5
+		mov	r7,r0
+		shlr	r0
+		exts	r0,r0
+		add 	r0,r5
+		mov	#_vdpreg,r8
+; .wstart:	mov.w	@(10,r8),r0
+; 		and	#%10,r0
+; 		tst	r0,r0
+; 		bf	.wstart
+		mov	r4,r0
+		mov.w	r0,@(4,r8)	; Set length
+		mov	r5,r0
+		mov.w	r0,@(6,r8)	; Set address
+		mov	r3,r0
+		mov.w	r0,@(8,r8)	; Set data
+.wend:		mov.w	@(10,r8),r0
 		and	#%10,r0
-		cmp/eq	#2,r0
-		bt	.waitfill
-		
-.bad:
+		tst	r0,r0
+		bf	.wend
+
+.exits:
+		mov	@r15+,r8
+		mov	@r15+,r7
+		mov	@r15+,r6
+		mov	@r15+,r5
+		mov	@r15+,r4
+		mov	@r15+,r3
+		mov	@r15+,r2
+		mov	@r15+,r1
 		rts
 		nop
 		align 4
-		
+		ltorg
+
 ; ----------------------------------------
 ; Texture material
 ; ----------------------------------------
 
-; free regs: r2-r6
-; r7 - Left X
-; r8 - Right X
-; r11 - Current Y
-; r13 - left dda
-; r14 - right dda
-
-.has_texture:
+; 		mov	@(plydda_src_x,r13),r3
+; 		mov	@(plydda_src_x,r14),r4
+; 		mov	@(plydda_src_y,r13),r5
+; 		mov	@(plydda_src_y,r14),r6
+; 		mov 	@(plydda_x,r13),r7	; start X
+; 		mov 	@(plydda_x,r14),r8	; end X
+; 		mov 	@(plydda_h,r13),r9
+; 		mov 	@(plydda_h,r14),r10
+drwpoly_texture:
 		mov 	r1,@-r15
 		mov 	r2,@-r15
+		mov 	r3,@-r15
+		mov 	r4,@-r15
+		mov 	r5,@-r15
+		mov 	r6,@-r15
 		mov 	r7,@-r15
 		mov 	r8,@-r15
 		mov 	r9,@-r15
 		mov 	r10,@-r15
+		mov 	r11,@-r15
 
-		mov	r7,r9
-		mov	r8,r10
-		mov	@(plydda_src_x,r14),r4		; texture RX
-		mov	@(plydda_src_x,r13),r5		; texture LX
-		mov	@(plydda_src_y,r14),r6		; texture RY
-		mov	@(plydda_src_y,r13),r7		; texture LY
- 		mov	r9,r0
+ 		mov	r7,r0
  		sub 	r8,r0
  		cmp/pz	r0
  		bf	.backwrdst
-		mov	r9,r2		; swap dest X
-		mov	r10,r3
-		mov 	r3,r9
-		mov	r2,r10
- 		mov	r7,r2		; swap texture X
- 		mov	r6,r3
- 		mov	r2,r6
- 		mov	r3,r7		
- 		mov	r5,r2		; swap texture Y
- 		mov	r4,r3
- 		mov	r2,r4
- 		mov	r3,r5	
+		mov	r7,r0		; swap dest X
+		mov	r8,r2
+		mov 	r2,r7
+		mov	r0,r8
+		mov	r3,r0		; swap texture X
+		mov	r4,r2
+		mov 	r2,r3
+		mov	r0,r4
+		mov	r5,r0		; swap texture Y
+		mov	r6,r2
+		mov 	r2,r5
+		mov	r0,r6
 .backwrdst:
-		shlr16	r9
-		exts	r9,r9
-		shlr16	r10
-		exts	r10,r10
-		cmp/pl	r10
+		shlr16	r7
+		exts	r7,r7
+		shlr16	r8
+		exts	r8,r8
+		
+	; OOB point check
+		cmp/pl	r8
 		bf	.texexit
 		mov	#SCREEN_WIDTH,r0
-		cmp/gt	r0,r9
+		cmp/gt	r0,r7
 		bt	.texexit
-		mov	r10,r3
-		mov 	r9,r0
-		sub 	r0,r3
-		add 	#1,r3
-
-	; SRC X
-		mov	#0,r0
-		cmp/eq	r0,r3
-		bf	.nozer
-		mov	#1,r3
-.nozer:
-		sub	r4,r5
-		mov 	#_JR,r0
-		mov 	r3,@r0
+		
+	; Start division
+		mov	r8,r0
+		mov 	r7,r2
+		sub 	r2,r0
+		add 	#1,r0
+		cmp/eq	#0,r0
+		bf	.nozero
+		mov 	#1,r0
+.nozero:
+		mov	#_JR,r2
+		sub	r3,r4			; SRC X
+		mov 	r0,@r2
 		nop
-		mov 	r5,@(4,r0)
+		mov 	r4,@(4,r2)
 		nop
-		mov	#8,r0
+		mov	#8,r2
 .waitdx:
-		dt	r0
+		dt	r2
 		bf	.waitdx
-		mov 	#_HRL,r0
-		mov 	@r0,r5
-
-	; SRC Y
-		sub	r6,r7
-		mov 	#_JR,r0
-		mov 	r3,@r0
+		mov 	#_HRL,r2
+		mov 	@r2,r4
+		
+		mov	#_JR,r2
+		sub	r5,r6			; SRC Y
+		mov 	r0,@r2
 		nop
-		mov 	r7,@(4,r0)
+		mov 	r6,@(4,r2)
 		nop
-		mov	#8,r0
+		mov	#8,r2
 .waitdy:
-		dt	r0
+		dt	r2
 		bf	.waitdy
-		mov 	#_HRL,r0
-		mov 	@r0,r7
+		mov 	#_HRL,r2
+		mov 	@r2,r6
 
-	; crop check
-		cmp/pl	r9
+	; X crop check
+		cmp/pz	r7
 		bt	.leftok
-		mov	#0,r9
-.leftok:
-		mov	r10,r0
-		mov	#SCREEN_WIDTH,r3
-		cmp/gt	r3,r0
-		bf	.rightok
-		mov	r3,r10
-		sub 	r3,r0
-		cmp/pl	r0
-		bf	.rightok
+		mov 	r7,r2
+		mov	#0,r7
+		neg 	r2,r2
 .rghtfix:
-		add	r5,r4				; Update X
-		add	r7,r6				; Update Y
-		dt	r0
+		add	r4,r3				; Update X
+		add	r6,r5				; Update Y
+		dt	r2
 		bf	.rghtfix
-.rightok:
+.leftok:
+		mov 	#SCREEN_WIDTH,r0
+		cmp/gt	r0,r8
+		bf	.rghtok
+		mov	r0,r8
+.rghtok:
 
-		mov 	#_overwrite+$200,r8
-		add 	r10,r8
+		mov	@(polygn_mtrl,r1),r10		; texture data
+		mov	@(polygn_mtrlopt,r1),r2		; texture width
 		mov 	r11,r0
 		shll8	r0
 		shll	r0
-		add 	r0,r8
+		mov 	#_overwrite+$200,r11
+		add 	r0,r11
+		add 	r7,r11
+		sub 	r7,r8
+		cmp/pl	r8
+		bf	.texexit
 
-	; start
-		mov	@(polygn_mtrl,r1),r3		; texture data
-		mov	@(polygn_mtrlopt,r1),r2		; texture width
 .texloop:
-		swap.w	r6,r1				; Build row offset
+		swap.w	r5,r1				; Build row offset
 		mulu.w	r1,r2
-		mov	r4,r1	   			; Build column index
+		mov	r3,r1	   			; Build column index
 		sts	macl,r0
 		shlr16	r1
 		add	r1,r0
-
-		mov.b	@(r0,r3),r0			; Read pixel
-		mov.b	r0,@-r8	   			; Write pixel
-
-		add	r5,r4				; Update X
-		dt	r10
-		cmp/ge	r9,r10
-		bt/s	.texloop
-		add	r7,r6				; Update Y
-
+		mov.b	@(r0,r10),r0			; Read pixel
+		mov.b	r0,@r11	   			; Write pixel
+		add 	#1,r11
+		add	r4,r3				; Update X
+		add	r6,r5				; Update Y
+		dt	r8
+		bf	.texloop
+		
 .texexit:
+		mov 	@r15+,r11
 		mov 	@r15+,r10
 		mov 	@r15+,r9
 		mov 	@r15+,r8
 		mov 	@r15+,r7
+		mov 	@r15+,r6
+		mov 	@r15+,r5
+		mov 	@r15+,r4
+		mov 	@r15+,r3
 		mov 	@r15+,r2
 		mov 	@r15+,r1
 		rts
 		nop
 		align 4
-		
 		ltorg
-
-; 		mov 	#_overwrite+$200,r3
-; 		mov 	@(polygn_mtrl,r1),r6
-; 		mov 	r11,r0
-; 		shll8	r0
-; 		shll	r0
-; 		add 	r0,r3
-; 		mov 	r7,r0
-; 		shlr16	r0
-; 		exts	r0,r0
-; 		mov.b 	r6,@(r0,r3)		
-; 		mov 	r8,r0
-; 		shlr16	r0
-; 		exts	r0,r0
-; 		rts
-; 		mov.b 	r6,@(r0,r3)
 		
 ; ---------------------------------
 ; Left DDA
@@ -1115,16 +1051,15 @@ make_model:
 		mov	@(plyfld_z,r13),r5	
 		mov	@(mdl_z,r14),r0
 		shlr8	r0
-		shll	r0
 		exts	r0,r0
 		add 	r0,r4
 		add 	r5,r4
 		
-	; Rotate points
-	; r2 - X
-	; r3 - Y
-	; r4 - Z
-
+; 	; Rotate points
+; 	; r2 - X
+; 	; r3 - Y
+; 	; r4 - Z
+; 
 	; X rotation
 		mov	@(mdl_x_rot,r14),r0
 		mov	@(plyfld_x,r13),r7
@@ -1241,7 +1176,6 @@ make_model:
 	;  r10 - numof_faces (in model)
 	;   r9 - Zbuffer list (BLANK|Z points) 
 	; mach - faces drawn
-
 		mov	#0,r0
 		lds	r0,mach
 		mov	#MARSVid_Polygns,r13
@@ -1318,8 +1252,15 @@ make_model:
 		cmp/pz	r4
 		bt	.offpnts
 		mov	#MAX_ZDISTANCE,r0	; max Z far
-		cmp/ge	r0,r4
+		cmp/gt	r0,r4
 		bf	.offpnts
+		
+		mov 	#160,r0
+		cmp/eq	r0,r2
+		bt	.offpnts
+		mov 	#112,r0
+		cmp/eq	r0,r2
+		bt	.offpnts
 		
 		mov	#-160,r0		; X out
 		cmp/ge	r0,r2
@@ -1327,7 +1268,6 @@ make_model:
 		neg	r0,r0
 		cmp/gt	r0,r2
 		bt	.offpnts
-
 		mov	#-112,r0		; Y out
 		cmp/ge	r0,r3
 		bf	.offpnts
@@ -1344,12 +1284,11 @@ make_model:
 .highz:
 	; Set X/Y
 		mov	#SCREEN_WIDTH/2,r0
-		add 	r0,r2
-		mov	r3,r0
-		add 	#SCREEN_HEIGHT/2,r0
-		mov.w	r2,@r5
+		add 	r2,r0
+		mov.w	r0,@r5
+		mov 	#SCREEN_HEIGHT/2,r0
+		add 	r3,r0
 		mov.w	r0,@(2,r5)
-
 		add	#4,r5
 		dt	r7
 		bf	.points
@@ -1360,7 +1299,6 @@ make_model:
 		mov	r8,@r9			; add Z entry
 		add 	#8,r9
 		add 	#sizeof_polygn,r13
-		
 		sts	mach,r0
 		add 	#1,r0
 		lds	r0,mach
@@ -1385,38 +1323,65 @@ make_model:
 ; 		ltorg
 
 ; ------------------------------------------------
-; r4 - Z
+; Muliply X and Y for perspective
+; persp*256/Z
+; 
+; r4 - Z current
+; ------------------------------------------------
+
+; TODO: use a precalculated list since
+; this method sucks
 
 mdlrd_calcpersp:
-	; (160)*256 / z
-		mov	#240<<8,r7	; distance << 8
-		mov 	#_JR,r0
-		mov	r4,r5
-		cmp/pl	r4
+; 		mov	r4,r0
+; 		mov	#persp_max,r7
+; 		cmp/pl	r0
+; 		bt	.cont
+; 		neg	r0,r0
+; 		mov	#persp_min,r7
+; .cont:
+; 		shll2	r0
+; 		mov 	@(r0,r7),r0
+; 		muls	r0,r2
+; 		sts	macl,r2		; new X
+; 		muls	r0,r3
+; 		sts	macl,r3		; new Y
+; 		rts
+; 		nop
+		
+		mov	#384*256,r7
+		mov	r4,r0
+		exts	r0,r0
+		cmp/pl	r0
 		bf	.dontdiv
-		mov 	#1,r5
+		mov 	#1,r0
 .dontdiv:
-		mov 	r5,@r0
+		mov 	#_JR,r5
+		mov 	r0,@r5
 		nop
-		mov 	r7,@(4,r0)
+		mov 	r7,@(4,r5)
 		nop
-		mov	#8,r0
+		mov	#8,r5
 .waitdx:
-		dt	r0
+		dt	r5
 		bf	.waitdx
-		mov	#_HRL,r0
-		mov 	@r0,r7
-; .dontdiv:
-		mov	r2,r5		; old X
-		mov	r3,r6		; old Y
-		muls	r7,r2
+		mov	#_HRL,r5
+		mov 	@r5,r0
+		
+		dmuls	r0,r2
 		sts	macl,r2		; new X
-		muls	r7,r3
+		dmuls	r0,r3
 		sts	macl,r3		; new Y
 
-	; Z fix
-		mov	#84,r0
-		add 	r0,r4
+		cmp/pz	r4
+		bf	.lel
+		neg	r2,r2
+		neg	r3,r3
+.lel:
+
+; 	Z bad fix
+; 		mov	#64,r0
+; 		add 	r0,r4
 		rts
 		nop
 		align 4
@@ -1436,7 +1401,6 @@ mdlrd_readsine:
 		rts
 		nop
 		align 4
-
 		ltorg
 
 ;
