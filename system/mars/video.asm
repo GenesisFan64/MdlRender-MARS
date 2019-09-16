@@ -949,6 +949,10 @@ MarsMdl_Run:
 		mov	#MarsMdl_CurrPly,r2
 		mov	#MARSVid_Polygns,r0
 		mov	r0,@r2
+		mov	#MarsMdl_CurrZtp,r2
+		mov	#MARSMdl_ZList+4,r0
+		mov	r0,@r2		
+		
 		mov	#MARSMdl_FaceCnt,r2
 		mov	#0,r0
 		mov	r0,@r2
@@ -1248,14 +1252,16 @@ make_model:
 	;  r10 - numof_faces (in model)
 	;   r9 - Zbuffer list (BLANK|Z points) 
 	; mach - faces drawn
-		mov	#0,r0
-		lds	r0,mach
-		mov	#MARSVid_Polygns,r13
-; 		mov	@r13,r13
+		mov	#MarsMdl_CurrPly,r13
+		mov	@r13,r13
+		mov 	#MarsMdl_CurrZtp,r9
+		mov	@r9,r9
+
+; 		mov	#MARSVid_Polygns,r13
 		mov 	#MarsMdl_OutPnts,r12
 		mov 	@($C,r1),r11		; face data
 		mov	@(4,r1),r10		; numof_faces
-		mov	#MARSMdl_ZList+4,r9	; Zbuffer (Zdata)
+; 		mov	#MARSMdl_ZList+4,r9	; Zbuffer (Zdata)
 		mov	#MAX_POLYGONS,r0
 		cmp/ge	r0,r10
 		bf	.plgnloop
@@ -1372,9 +1378,11 @@ make_model:
 		mov	r8,@r9			; add Z entry
 		add 	#8,r9
 		add 	#sizeof_polygn,r13
-		sts	mach,r0
+		
+		mov	#MARSMdl_FaceCnt,r7
+		mov	@r7,r0
 		add 	#1,r0
-		lds	r0,mach
+		mov 	r0,@r7
 .offbnds:
 		dt	r10
 		bf	.plgnloop
@@ -1382,13 +1390,11 @@ make_model:
 		mov	#0,r0
 		mov	r0,@(polygn_type,r13)
 		mov	r0,@r9
-; 		mov	#MarsMdl_CurrPly,r0
-; 		mov	r13,@r0
-		mov	#MARSMdl_FaceCnt,r2
-		mov	@r2,r3
-		sts	mach,r0
-		add 	r0,r3
-		mov	r3,@r2
+
+		mov	#MarsMdl_CurrZtp,r0
+		mov	r9,@r0
+		mov	#MarsMdl_CurrPly,r0
+		mov	r13,@r0
 
 		lds	@r15+,pr
 		rts

@@ -882,21 +882,22 @@ SH2_S_HotStart:
 		nop
 
 		mov 	#MARSMdl_Objects,r3
-		mov 	#TEST_MODEL,r1
+		mov 	#TEST_MODEL_2,r1
 		mov 	r1,@(mdl_data,r3)
 		mov 	#0,r0
 		mov 	r0,@(mdl_x,r3)
 		mov 	r0,@(mdl_y,r3)
+		mov 	#-$8000,r0
 		mov 	r0,@(mdl_z,r3)
 
-; 		mov 	#MARSMdl_Objects+sizeof_mdl,r3
-; 		mov 	#TEST_MODEL_2,r1
-; 		mov 	r1,@(mdl_data,r3)
-; 		mov 	#0,r0
-; 		mov 	r0,@(mdl_x,r3)
-; 		mov 	r0,@(mdl_y,r3)
-; 		mov 	#-$10000,r0
-; 		mov 	r0,@(mdl_z,r3)
+		mov 	#MARSMdl_Objects+sizeof_mdl,r3
+		mov 	#TEST_MODEL_2,r1
+		mov 	r1,@(mdl_data,r3)
+		mov 	#0,r0
+		mov 	r0,@(mdl_x,r3)
+		mov 	r0,@(mdl_y,r3)
+		mov 	#-$8000,r0
+		mov 	r0,@(mdl_z,r3)
 
 ; --------------------------------------------------------
 ; Loopf
@@ -1254,11 +1255,12 @@ MARSVid_LastFb	ds.l 1
 MarsVid_VIntBit	ds.l 1
 MARSMdl_FaceCnt	ds.l 1
 MarsMdl_CurrPly	ds.l 1
+MarsMdl_CurrZtp	ds.l 1
 MARSMdl_OutPnts ds.l 3*MAX_VERTICES			; Output vertices for reading
 MARSMdl_ZList	ds.l 2*MAX_POLYGONS			; Polygon address | Polygon Z pos
 MARSVid_Palette	ds.w 256
-MARSVid_Polygns	ds.b sizeof_polygn*MAX_POLYGONS		; Polygon data
 MARSMdl_Playfld	ds.b sizeof_plyfld			; Playfield buffer (or camera)
+MARSVid_Polygns	ds.b sizeof_polygn*MAX_POLYGONS		; Polygon data
 MARSMdl_Objects	ds.b sizeof_mdl*MAX_MODELS
 sizeof_marsvid	ds.l 0
 		finish
