@@ -16,7 +16,7 @@
 ; ----------------------------------------
 
 MAX_VERTICES	equ	2048
-MAX_POLYGONS	equ	512
+MAX_POLYGONS	equ	1024
 MAX_MODELS	equ	24
 MAX_ZDISTANCE	equ	-192		; lower distance, more stable
 
@@ -391,6 +391,7 @@ drwpoly_line:
 
 	; STABLE
 		mov 	@(polygn_mtrl,r1),r0
+		and	#$FF,r0
 		mov	r0,r3
 		shll8	r0
 		or	r0,r3
@@ -945,6 +946,9 @@ MarsMdl_Init:
 
 MarsMdl_Run:
 		sts	pr,@-r15
+		mov	#MarsMdl_CurrPly,r2
+		mov	#MARSVid_Polygns,r0
+		mov	r0,@r2
 		mov	#MARSMdl_FaceCnt,r2
 		mov	#0,r0
 		mov	r0,@r2
@@ -1035,38 +1039,10 @@ make_model:
 		mov	@r11+,r3
 		mov	@r11+,r4
 
-	; Modify position
-		mov	@(plyfld_x,r13),r5
-		mov	@(mdl_x,r14),r0
-		shlr8	r0
-		exts	r0,r0
-		sub 	r0,r2
-		sub 	r5,r2
-		mov	@(plyfld_y,r13),r5
-		mov	@(mdl_y,r14),r0
-		shlr8	r0
-		exts	r0,r0
-		sub 	r0,r3
-		sub 	r5,r3
-		mov	@(plyfld_z,r13),r5	
-		mov	@(mdl_z,r14),r0
-		shlr8	r0
-		shll	r0
-		exts	r0,r0
-		add 	r0,r4
-		add 	r5,r4
-		
-; 	; Rotate points
-; 	; r2 - X
-; 	; r3 - Y
-; 	; r4 - Z
-; 
-	; X rotation
-		mov	@(mdl_x_rot,r14),r0
-		mov	@(plyfld_x,r13),r7
-		shlr8	r0
+	; PASS 1
+		mov	@(mdl_x_rot,r14),r0	; X rotation
 		bsr	mdlrd_readsine
-		add 	r7,r0
+		shlr8	r0
 		dmuls	r2,r8		; X cos @
 		sts	macl,r5
 		sts	mach,r0
@@ -1087,13 +1063,9 @@ make_model:
 		xtrct	r7,r0
 		add	r0,r6
 		mov 	r5,r2		; Save X	
-
-	; Y rotation
-		mov	@(mdl_y_rot,r14),r0
-		mov	@(plyfld_y,r13),r7
-		shlr8	r0
+		mov	@(mdl_y_rot,r14),r0	; Y rotation
 		bsr	mdlrd_readsine
-		add 	r7,r0
+		shlr8	r0		
 		mov	r3,r9
 		dmuls	r3,r8		; Y cos @
 		sts	macl,r9
@@ -1116,10 +1088,7 @@ make_model:
 		xtrct	r0,r5
 		add	r5,r9
 		mov	r9,r4		; Save Z
-
-	; Z rotation
-		mov	@(mdl_z_rot,r14),r0
-		mov	@(plyfld_z,r13),r7
+		mov	@(mdl_z_rot,r14),r0	; Z rotation
 		shlr8	r0
 		bsr	mdlrd_readsine
 		add 	r7,r0
@@ -1132,7 +1101,6 @@ make_model:
 		sts	mach,r0
 		xtrct	r0,r6
 		add 	r6,r5
-
 		neg	r7,r7
 		dmuls	r2,r7		; X -sin @
 		sts	macl,r6
@@ -1145,6 +1113,106 @@ make_model:
 		add	r0,r6
 		mov 	r5,r2		; Save X
 		mov	r6,r3
+		mov	@(mdl_x,r14),r0
+		shlr8	r0
+		exts	r0,r0
+		add 	r0,r2
+		mov	@(mdl_y,r14),r0
+		shlr8	r0
+		exts	r0,r0
+		add 	r0,r3
+		mov	@(mdl_z,r14),r0
+		shlr8	r0
+		shll	r0
+		exts	r0,r0
+		add 	r0,r4
+
+	; PASS 2
+		mov	@(plyfld_x,r13),r0
+		shlr8	r0
+		exts	r0,r0
+		sub 	r0,r2
+		mov	@(plyfld_y,r13),r0
+		shlr8	r0
+		exts	r0,r0
+		sub 	r0,r3
+		mov	@(plyfld_z,r13),r0
+		shlr8	r0
+		shll	r0
+		exts	r0,r0
+		add 	r0,r4
+		mov	@(plyfld_x_rot,r13),r0	; X rotation
+		bsr	mdlrd_readsine
+		shlr8	r0
+		dmuls	r2,r8		; X cos @
+		sts	macl,r5
+		sts	mach,r0
+		xtrct	r0,r5
+		dmuls	r4,r7		; Z sin @
+		sts	macl,r6
+		sts	mach,r0
+		xtrct	r0,r6
+		add 	r6,r5
+		neg	r7,r7
+		dmuls	r2,r7		; X -sin @
+		sts	macl,r6
+		sts	mach,r0
+		xtrct	r0,r6
+		dmuls	r4,r8		; Z cos @
+		sts	macl,r0
+		sts	mach,r7
+		xtrct	r7,r0
+		add	r0,r6
+		mov 	r5,r2		; Save X	
+		mov	@(plyfld_y_rot,r13),r0	; Y rotation
+		bsr	mdlrd_readsine
+		shlr8	r0		
+		mov	r3,r9
+		dmuls	r3,r8		; Y cos @
+		sts	macl,r9
+		sts	mach,r0
+		xtrct	r0,r9
+		dmuls	r6,r7		; Z sin @
+		sts	macl,r5
+		sts	mach,r0
+		xtrct	r0,r5
+		add 	r5,r9
+		neg	r7,r7
+		dmuls	r3,r7		; Y -sin @
+		mov	r9,r3		; Save Y
+		sts	macl,r9
+		sts	mach,r0
+		xtrct	r0,r9
+		dmuls	r6,r8		; Z cos @
+		sts	macl,r5
+		sts	mach,r0
+		xtrct	r0,r5
+		add	r5,r9
+		mov	r9,r4		; Save Z
+		mov	@(plyfld_z_rot,r13),r0	; Z rotation
+		shlr8	r0
+		bsr	mdlrd_readsine
+		add 	r7,r0
+		dmuls	r2,r8		; X cos @
+		sts	macl,r5
+		sts	mach,r0
+		xtrct	r0,r5
+		dmuls	r3,r7		; Z sin @
+		sts	macl,r6
+		sts	mach,r0
+		xtrct	r0,r6
+		add 	r6,r5
+		neg	r7,r7
+		dmuls	r2,r7		; X -sin @
+		sts	macl,r6
+		sts	mach,r0
+		xtrct	r0,r6
+		dmuls	r3,r8		; Z cos @
+		sts	macl,r0
+		sts	mach,r7
+		xtrct	r7,r0
+		add	r0,r6
+		mov 	r5,r2		; Save X
 
 		bsr	mdlrd_calcpersp
 		nop
@@ -1164,8 +1232,11 @@ make_model:
 		add 	#$C,r12
 		
 		dt	r10
-		bf	.cpypnts
-	
+		bt	.cpypnts2
+		bra	.cpypnts
+		nop
+.cpypnts2
+
 	; --------------------------
 	; Read faces
 	; --------------------------
@@ -1180,6 +1251,7 @@ make_model:
 		mov	#0,r0
 		lds	r0,mach
 		mov	#MARSVid_Polygns,r13
+; 		mov	@r13,r13
 		mov 	#MarsMdl_OutPnts,r12
 		mov 	@($C,r1),r11		; face data
 		mov	@(4,r1),r10		; numof_faces
@@ -1310,7 +1382,8 @@ make_model:
 		mov	#0,r0
 		mov	r0,@(polygn_type,r13)
 		mov	r0,@r9
-
+; 		mov	#MarsMdl_CurrPly,r0
+; 		mov	r13,@r0
 		mov	#MARSMdl_FaceCnt,r2
 		mov	@r2,r3
 		sts	mach,r0
