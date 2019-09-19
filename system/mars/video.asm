@@ -17,8 +17,8 @@
 
 MAX_VERTICES	equ	2730;2048
 MAX_POLYGONS	equ	1024
-MAX_MODELS	equ	32
-MAX_ZDISTANCE	equ	-128		; lower distance, more stable
+MAX_MODELS	equ	64
+MAX_ZDISTANCE	equ	-192		; lower distance, more stable
 
 ; ----------------------------------------
 ; Variables
@@ -1033,7 +1033,7 @@ make_model:
 		mov	r2,@-r15
 
 ; --------------------------
-; M
+; Critical part
 ; --------------------------
 
 	;  r14 - model buffer
@@ -1043,7 +1043,6 @@ make_model:
 	;  r10 - numof_faces (from header)
 	;   r9 - Zbuffer list (BLANK|Z points) 
 	; mach - faces drawn
-
 		mov	#MarsMdl_CurrPly,r13
 		mov 	#MarsMdl_CurrZtp,r9	; Zbuffer (Zdata)
 		mov	@r13,r13
@@ -1112,7 +1111,6 @@ make_model:
 		add 	r0,r4
 
 	; Prespective stuff
-	; free: r7
 		mov	@r4,r2
 		mov	@(4,r4),r3
 		mov	@(8,r4),r4
@@ -1173,7 +1171,6 @@ make_model:
 		mov 	r2,r0
 .tomuch:
 		mov 	r0,@r7
-
 .offbnds:
 		dt	r10
 		bf	.plgnloop
@@ -1211,7 +1208,7 @@ mdlread_dopersp:
 		mov 	r13,@-r15
 		mov 	#MarsMdl_Playfld,r13
 
-; 	; PASS 1
+	; PASS 1
 		mov	@(mdl_x_rot,r14),r0	; X rotation
 		bsr	mdlrd_readsine
 		shlr8	r0
@@ -1386,12 +1383,14 @@ mdlread_dopersp:
 		add	r0,r6
 		mov 	r5,r2		; Save X
 
-		mov	#384*256,r7
+	; Y perspective
+		mov	#256*256,r8
+		mov	#256*256,r7
+		
 		mov	r4,r0
-		exts	r0,r0
-		cmp/pl	r0
+		cmp/pz	r0
 		bf	.dontdiv
-		mov 	#0,r0
+		mov 	#1,r0
 .dontdiv:
 		mov 	#_JR,r5
 		mov 	r0,@r5
@@ -1403,22 +1402,37 @@ mdlread_dopersp:
 		dt	r5
 		bf	.waitdx
 		mov	#_HRL,r5
-		mov 	@r5,r0
-		
-		dmuls	r0,r2
-		sts	macl,r2		; new X
-		dmuls	r0,r3
+		mov 	@r5,r5
+		dmuls	r5,r3
 		sts	macl,r3		; new Y
+		cmp/pz	r4
+		bf	.dontfix
+		neg 	r3,r3
+.dontfix:
 
-		cmp/pl	r4
-		bf	.lel
+	; X perspective
+		mov	r4,r0
+		cmp/pz	r0
+		bf	.dontdiv2
+		mov 	#1,r0
+.dontdiv2:
+		mov 	#_JR,r5
+		mov 	r0,@r5
+		nop
+		mov 	r8,@(4,r5)
+		nop
+		mov	#8,r5
+.waitdx2:
+		dt	r5
+		bf	.waitdx2
+		mov	#_HRL,r5
+		mov 	@r5,r5
+		dmuls	r5,r2
+		sts	macl,r2		; new X
+		cmp/pz	r4
+		bf	.dontfix2
 		neg	r2,r2
-		neg	r3,r3
-.lel:
-
-; 	Z bad fix
-; 		mov	#64,r0
-; 		add 	r0,r4
+.dontfix2:
 
 		shlr8	r2
 		exts	r2,r2

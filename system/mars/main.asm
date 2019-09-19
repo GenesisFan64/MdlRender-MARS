@@ -882,7 +882,7 @@ SH2_S_HotStart:
 		nop
 
 		mov 	#MARSMdl_Objects,r3
-		mov 	#TEST_MODEL_2,r1
+		mov 	#TEST_MODEL,r1
 		mov 	r1,@(mdl_data,r3)
 		mov 	#0,r0
 		mov 	r0,@(mdl_x,r3)
@@ -890,14 +890,14 @@ SH2_S_HotStart:
 		mov 	#-$8000,r0
 		mov 	r0,@(mdl_z,r3)
 
-		mov 	#MARSMdl_Objects+sizeof_mdl,r3
-		mov 	#TEST_MODEL_2,r1
-		mov 	r1,@(mdl_data,r3)
-		mov 	#0,r0
-		mov 	r0,@(mdl_x,r3)
-		mov 	r0,@(mdl_y,r3)
-		mov 	#-$8000,r0
-		mov 	r0,@(mdl_z,r3)
+; 		mov 	#MARSMdl_Objects+sizeof_mdl,r3
+; 		mov 	#TEST_MODEL_2,r1
+; 		mov 	r1,@(mdl_data,r3)
+; 		mov 	#0,r0
+; 		mov 	r0,@(mdl_x,r3)
+; 		mov 	r0,@(mdl_y,r3)
+; 		mov 	#-$8000,r0
+; 		mov 	r0,@(mdl_z,r3)
 
 ; --------------------------------------------------------
 ; Loopf
