@@ -119,19 +119,62 @@
 ; ----------------------------------------------------------------
 
 MARS_Entry:
- 		bcs.s	.no_mars
-
+		bcs	.md_only
+		move.l	#0,(RAM_initflug).l
+		btst	#15,d0
+		beq.s	.init
 		lea	(sysmars_reg).l,a5
-.M_OK:		cmp.l	#"M_OK",comm0(a5)
-		bne	.M_OK
-.S_OK:		cmp.l	#"S_OK",comm4(a5)
-		bne	.S_OK
+		btst.b	#0,adapter(a5)		; Adapter enable
+		bne	.adapterenable
+		move.l	#0,comm8(a5)
+		lea	.ramcode(pc),a0		; copy from ROM to WRAM
+		lea	($FF0000).l,a1
+		move.l	(a0)+,(a1)+
+		move.l	(a0)+,(a1)+
+		move.l	(a0)+,(a1)+
+		move.l	(a0)+,(a1)+
+		move.l	(a0)+,(a1)+
+		move.l	(a0)+,(a1)+
+		move.l	(a0)+,(a1)+
+		move.l	(a0)+,(a1)+
+		lea	($FF0000).l,a0
+		jmp	(a0)			; jump workram
+.ramcode:
+		move.b	#1,adapter(a5)		; MARS mode
+		lea	.restarticd(pc),a0
+		adda.l	#$880000,a0
+		jmp	(a0)
+.restarticd:
+		lea	($A10000).l,a5
+		move.l	#-64,a4
+		move.w	#3900,d7
+		lea	($880000+$6E4),a1
+		jmp	(a1)
+.adapterenable:
+		lea	(sysmars_reg),a5
+		btst.b	#1,adapter(a5)		; SH2 Reset
+		bne.s	.hotstart
+		bra.s	.restarticd
 
-		moveq	#0,d0
-		move.l	d0,comm0(a5)
-		move.l	d0,comm4(a5)
+; ------------------------------------------------
+; Init
+; ------------------------------------------------
+
+.init:
+		lea	(sysmars_reg).l,a5
+.wm:		cmp.l	#'M_OK',comm0(a5)	; SH2 Master OK ?
+		bne.s	.wm
+.ws:		cmp.l	#'S_OK',comm4(a5)	; SH2 Slave OK ?
+		bne.s	.ws
+		moveq	#0,d0			; SH2 Start
+		move.l	d0,comm0(a5)		; Master
+		move.l	d0,comm4(a5)		; Slave
+		move.l	#"INIT",(RAM_initflug).l
+.hotstart:
+		cmp.l	#"INIT",(RAM_initflug).l
+		bne.s	.init
+.md_only:
 		bsr	MD_Init
-		
 		lea	Engine_Code(pc),a0
 		lea	($FF0000),a1
 		move.w	#Engine_Code_end-Engine_Code/2,d0
@@ -140,34 +183,6 @@ MARS_Entry:
 		dbf	d0,.copyme
 		jmp	(MD_Main).l
 
-; --------------------------------------------------------
-; No MARS detected
-; --------------------------------------------------------
-
-.no_mars:
-		move.w	#$2700,sr
-		bsr	MD_Init
-		bra.s	*
-
-; ====================================================================
-; ----------------------------------------------------------------
-; Error trap
-; ----------------------------------------------------------------
-
-MD_ErrBus:		; Bus error
-MD_ErrAddr:		; Address error
-MD_ErrIll:		; ILLEGAL Instruction
-MD_ErrZDiv:		; Divide by 0
-MD_ErrChk:		; CHK Instruction
-MD_ErrTrapV:		; TRAPV Instruction
-MD_ErrPrivl:		; Privilege violation
-MD_Trace:		; Trace
-MD_Line1010:		; Line 1010 Emulator
-MD_Line1111:		; Line 1111 Emulator
-MD_ErrorEx:		; Error exception
-MD_ErrorTrap:
-		rte
-	
 ; ====================================================================
 ; ----------------------------------------------------------------
 ; System init goes here
@@ -188,3 +203,24 @@ MD_Init:
 		dbf	d0,.clrram
 		movem.l	($FF0000),d0-a6		; Clear registers
 		rts
+
+; ====================================================================
+; ----------------------------------------------------------------
+; Error trap
+; ----------------------------------------------------------------
+
+MD_ErrBus:		; Bus error
+MD_ErrAddr:		; Address error
+MD_ErrIll:		; ILLEGAL Instruction
+MD_ErrZDiv:		; Divide by 0
+MD_ErrChk:		; CHK Instruction
+MD_ErrTrapV:		; TRAPV Instruction
+MD_ErrPrivl:		; Privilege violation
+MD_Trace:		; Trace
+MD_Line1010:		; Line 1010 Emulator
+MD_Line1111:		; Line 1111 Emulator
+MD_ErrorEx:		; Error exception
+MD_ErrorTrap:
+		rte
+	
+

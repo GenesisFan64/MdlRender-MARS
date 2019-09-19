@@ -1256,7 +1256,6 @@ MarsVid_VIntBit	ds.l 1
 MARSMdl_FaceCnt	ds.l 1
 MarsMdl_CurrPly	ds.l 1
 MarsMdl_CurrZtp	ds.l 1
-MARSMdl_OutPnts ds.l 3*MAX_VERTICES			; Output vertices for reading
 MARSMdl_ZList	ds.l 2*MAX_POLYGONS			; Polygon address | Polygon Z pos
 MARSVid_Palette	ds.w 256
 MARSMdl_Playfld	ds.b sizeof_plyfld			; Playfield buffer (or camera)
