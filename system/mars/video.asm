@@ -15,9 +15,9 @@
 ; Settings
 ; ----------------------------------------
 
-MAX_VERTICES	equ	2730;2048
+MAX_VERTICES	equ	2048
 MAX_POLYGONS	equ	1024
-MAX_MODELS	equ	64
+MAX_MODELS	equ	24
 MAX_ZDISTANCE	equ	-192		; lower distance, more stable
 
 ; ----------------------------------------
@@ -81,10 +81,6 @@ sizeof_polygn	ds.l 0
 PolyRndr_Left	ds.b sizeof_plydda*4
 PolyRndr_Right	ds.b sizeof_plydda*4
 		finish
-
-; 		struct $C0000000
-; MarsMdl_OutPnts ds.l 3*MAX_VERTICES			; Output vertices for reading
-; 		finish
 		
 ; ====================================================================
 ; ----------------------------------------------------------------
@@ -102,6 +98,7 @@ MarsVideo_Init:
   		mov.b	r0,@(adapter,gbr)
 		
 	; Init linetable and swap
+
 		bsr	.this_fb
 		nop
 		bsr	.this_fb
@@ -152,7 +149,7 @@ MarsVideo_Init:
 
 ; MarsVideo_Render:
 ; 		sts	pr,@-r15
-; 		mov 	#MarsMdl_ZList,r2
+; 		mov 	#MARSMdl_ZList,r2
 ; .next:
 ; 		mov	@r2,r0
 ; 		cmp/eq	#0,r0
@@ -927,7 +924,7 @@ MarsVideo_LoadPal:
 ; --------------------------------------------------------
 
 MarsMdl_Init:
-		mov 	#MarsMdl_Objects,r1
+		mov 	#MARSMdl_Objects,r1
 		mov 	#sizeof_mdl,r2
 		mov 	#0,r0
 .clrbuff:
@@ -936,7 +933,7 @@ MarsMdl_Init:
 		dt	r2
 		bf	.clrbuff
 
-; 		mov 	#MarsMdl_Objects,r1
+; 		mov 	#MARSMdl_Objects,r1
 ; 		mov 	#TEST_MODEL,r0
 ; 		mov 	r0,@(mdl_data,r1)
 		rts
@@ -949,17 +946,17 @@ MarsMdl_Init:
 
 MarsMdl_Run:
 		sts	pr,@-r15
-		mov	#MarsMdl_CurrPly,r2	; Reset stuff
+		mov	#MarsMdl_CurrPly,r2
 		mov	#MARSVid_Polygns,r0
 		mov	r0,@r2
 		mov	#MarsMdl_CurrZtp,r2
-		mov	#MarsMdl_ZList+4,r0
+		mov	#MARSMdl_ZList+4,r0
 		mov	r0,@r2		
-		mov	#MarsMdl_FaceCnt,r2
+		
+		mov	#MARSMdl_FaceCnt,r2
 		mov	#0,r0
 		mov	r0,@r2
-
-		mov 	#MarsMdl_Objects,r14
+		mov 	#MARSMdl_Objects,r14
 .loop:
 		mov	@(mdl_data,r14),r0
 		cmp/eq	#0,r0
@@ -976,11 +973,11 @@ MarsMdl_Run:
 ; Painters algorithm
 ; ------------------------------------------------
 
-		mov	#MarsMdl_ZList+4,r14	; Z points
-		mov	#MarsMdl_ZList,r13	; polygon addreses	
+		mov	#MARSMdl_ZList+4,r14	; Z points
+		mov	#MARSMdl_ZList,r13	; polygon addreses	
 		mov	#MARSVid_Polygns,r12	; polygon list
 		mov	#MAX_ZDISTANCE,r11	; max Z distance
-		mov	#MarsMdl_FaceCnt,r10	; numof_faces
+		mov	#MARSMdl_FaceCnt,r10	; numof_faces
 		mov	@r10,r10
 		mov	#0,r0
 		mov	r0,@r13			; clear first entry
@@ -992,7 +989,7 @@ MarsMdl_Run:
 		mov	@r14,r0			; grab Z pos
 		cmp/eq	#0,r0			; 0 - endoflist
 		bf	.nores
-		mov	#MarsMdl_ZList+4,r14	; Z list
+		mov	#MARSMdl_ZList+4,r14	; Z list
 		mov	#MARSVid_Polygns,r12	; polygon list
 		bra	.next
 		add 	#1,r11			; Z distance + 1
@@ -1030,183 +1027,21 @@ MarsMdl_Run:
 
 make_model:
 		sts	pr,@-r15
-		mov	r2,@-r15
-
-; --------------------------
-; Critical part
-; --------------------------
-
-	;  r14 - model buffer
-	;  r13 - polygon buffer
-	;  r12 - vertices address
-	;  r11 - face address
-	;  r10 - numof_faces (from header)
-	;   r9 - Zbuffer list (BLANK|Z points) 
-	; mach - faces drawn
-		mov	#MarsMdl_CurrPly,r13
-		mov 	#MarsMdl_CurrZtp,r9	; Zbuffer (Zdata)
-		mov	@r13,r13
-		mov 	@($8,r1),r12
-		mov 	@($C,r1),r11		; face data
-		mov	@(4,r1),r10		; numof_faces
-		mov	@r9,r9
-
-		mov	#MAX_POLYGONS,r0
-		cmp/ge	r0,r10
-		bf	.plgnloop
-		mov	r0,r10
-.plgnloop:
-		mov.w	@r11+,r7		; r7 - numof_points | mtrl flag
-		mov.w	@r11+,r6		; r6 - material id
-		cmp/pl	r7
-		bt	.nomtrl
-		mov	#$FF,r0
-		and	r0,r7
 		
-	; face has texture material
-		mov	r6,r0
-		mov 	@($14,r1),r5		; material data
-		shll2	r0
-		shll	r0
-		add 	r0,r5
-		mov	@r5,r0
-		mov	r0,r6
-		mov	@(4,r5),r0
-		mov	r0,@(polygn_mtrlopt,r13)
-		mov	@($10,r1),r4		; texture points
-		mov	r13,r3
-		add 	#polygn_srcpnts,r3
-		mov	r7,r5
-.srcpnts:
-		mov	#0,r0
-		mov.w 	@r11+,r0
-		shll2	r0
-		mov	r4,r2
-		add 	r0,r2
-		mov.w	@r2+,r0
-		mov.w	r0,@r3
-		mov.w	@r2+,r0
-		mov.w	r0,@(2,r3)
-		add	#4,r3
-		dt	r5
-		bf	.srcpnts
-
-.nomtrl:
-	; face has points only
-		; r7 - type
-		mov	r6,@(polygn_mtrl,r13)
-		mov	r7,@(polygn_type,r13)
-	; read dest points
-		mov	#0,r8			; last Z
-		mov	r7,r6			; off points
-		mov	r13,r5
-		add 	#polygn_points,r5
-.points:
-		mov	#0,r0
-		mov.w 	@r11+,r0
-		mov	#$C,r4
-		mulu	r4,r0
-		sts	macl,r0
-		mov	r12,r4
-		add 	r0,r4
-
-	; Prespective stuff
-		mov	@r4,r2
-		mov	@(4,r4),r3
-		mov	@(8,r4),r4
-		bsr	mdlread_dopersp
-		nop
-
-	; OOB check
-		cmp/pz	r4
-		bt	.offpnts
-		mov	#MAX_ZDISTANCE,r0	; max Z far
-		cmp/gt	r0,r4
-		bf	.offpnts
-
-		mov	#-160,r0		; X out
-		cmp/ge	r0,r2
-		bf	.offpnts
-		neg	r0,r0
-		cmp/gt	r0,r2
-		bt	.offpnts
-		mov	#-112,r0		; Y out
-		cmp/ge	r0,r3
-		bf	.offpnts
-		neg	r0,r0
-		cmp/gt	r0,r3
-		bf	.inside
-.offpnts:
-		add 	#-1,r6
-.inside:
-	; lowest Z
-		cmp/gt	r8,r4
-		bt	.highz
-		mov	r4,r8
-.highz:
-	; Set X/Y
-		mov	#SCREEN_WIDTH/2,r0
-		add 	r2,r0
-		mov.w	r0,@r5
-		mov 	#SCREEN_HEIGHT/2,r0
-		add 	r3,r0
-		mov.w	r0,@(2,r5)
-		add	#4,r5
-		dt	r7
-		bf	.points
-
-	; OOB set?
-		cmp/pl	r6
-		bf	.offbnds
-		mov	r8,@r9			; add Z entry
-		add 	#8,r9
-		add 	#sizeof_polygn,r13
-		
-		mov	#MarsMdl_FaceCnt,r7
-		mov	@r7,r0
-		add 	#1,r0
-		mov 	#MAX_POLYGONS,r2
-		cmp/ge	r2,r0
-		bf	.tomuch
-		mov 	r2,r0
-.tomuch:
-		mov 	r0,@r7
-.offbnds:
-		dt	r10
-		bf	.plgnloop
-		
-		mov	#0,r0
-		mov	r0,@(polygn_type,r13)
-		mov	r0,@r9
-
-		mov	#MarsMdl_CurrZtp,r0
-		mov	r9,@r0
-		mov	#MarsMdl_CurrPly,r0
-		mov	r13,@r0
-
-		mov	@r15+,r2
-		lds	@r15+,pr
-		rts
-		nop
-		align 4
-		ltorg
-
-; ------------------------------------------------
-; Muliply X and Y for perspective
-; persp*256/Z
-; 
-; r4 - Z current
-; ------------------------------------------------
-
-mdlread_dopersp:
-		sts	pr,@-r15
-		mov 	r5,@-r15
-		mov 	r6,@-r15
-		mov 	r7,@-r15
-		mov 	r8,@-r15
-		mov 	r9,@-r15
-		mov 	r13,@-r15
-		mov 	#MarsMdl_Playfld,r13
+	; Points output
+		mov	#MarsMdl_Playfld,r13
+		mov 	#MarsMdl_OutPnts,r12
+		mov	@r1,r10
+; 		mov	#MAX_VERTICES,r0
+; 		cmp/ge	r0,r10
+; 		bf	.ranout
+; 		mov	r0,r10
+; .ranout:
+		mov	@(8,r1),r11
+.cpypnts:
+		mov	@r11+,r2
+		mov	@r11+,r3
+		mov	@r11+,r4
 
 	; PASS 1
 		mov	@(mdl_x_rot,r14),r0	; X rotation
@@ -1383,12 +1218,205 @@ mdlread_dopersp:
 		add	r0,r6
 		mov 	r5,r2		; Save X
 
-	; Y perspective
-		mov	#256*256,r8
-		mov	#256*256,r7
+		bsr	mdlrd_calcpersp
+		nop
+
+	; r2-r3 new X
+	; r5-r6 old X
+
+		shlr8	r2
+		exts	r2,r2
+		shlr8	r3
+		exts	r3,r3
+		shlr2	r4
+		exts	r4,r4
+		mov	r2,@r12
+		mov	r3,@(4,r12)
+		mov	r4,@(8,r12)
+		add 	#$C,r12
 		
+		dt	r10
+		bt	.cpypnts2
+		bra	.cpypnts
+		nop
+.cpypnts2
+
+	; --------------------------
+	; Read faces
+	; --------------------------
+
+	;  r14 - model buffer
+	;  r13 - polygon buffer
+	;  r12 - vertices address
+	;  r11 - face address
+	;  r10 - numof_faces (in model)
+	;   r9 - Zbuffer list (BLANK|Z points) 
+	; mach - faces drawn
+		mov	#MarsMdl_CurrPly,r13
+		mov	@r13,r13
+		mov 	#MarsMdl_CurrZtp,r9
+		mov	@r9,r9
+
+; 		mov	#MARSVid_Polygns,r13
+		mov 	#MarsMdl_OutPnts,r12
+		mov 	@($C,r1),r11		; face data
+		mov	@(4,r1),r10		; numof_faces
+; 		mov	#MARSMdl_ZList+4,r9	; Zbuffer (Zdata)
+		mov	#MAX_POLYGONS,r0
+		cmp/ge	r0,r10
+		bf	.plgnloop
+		mov	r0,r10
+.plgnloop:
+		mov.w	@r11+,r7		; r7 - numof_points | mtrl flag
+		mov.w	@r11+,r6		; r6 - material id
+		cmp/pl	r7
+		bt	.nomtrl
+		mov	#$FF,r0
+		and	r0,r7
+		
+	; face has texture material
+		mov	r6,r0
+		mov 	@($14,r1),r5		; material data
+		shll2	r0
+		shll	r0
+		add 	r0,r5
+		mov	@r5,r0
+		mov	r0,r6
+		mov	@(4,r5),r0
+		mov	r0,@(polygn_mtrlopt,r13)
+
+		mov	@($10,r1),r4		; texture points
+		mov	r13,r3
+		add 	#polygn_srcpnts,r3
+		mov	r7,r5
+.srcpnts:
+		mov	#0,r0
+		mov.w 	@r11+,r0
+		shll2	r0
+		mov	r4,r2
+		add 	r0,r2
+
+		mov.w	@r2+,r0
+		mov.w	r0,@r3
+		mov.w	@r2+,r0
+		mov.w	r0,@(2,r3)
+		add	#4,r3
+		dt	r5
+		bf	.srcpnts
+
+.nomtrl:
+	; face has points only
+		; r7 - type
+		mov	r6,@(polygn_mtrl,r13)
+		mov	r7,@(polygn_type,r13)
+
+	; read dest points
+		mov	#0,r8			; last Z
+		mov	r7,r6			; off points
+		mov	r13,r5
+		add 	#polygn_points,r5
+.points:
+		mov	#0,r0
+		mov.w 	@r11+,r0
+		mov	#$C,r4
+		mulu	r4,r0
+		sts	macl,r0
+		mov	r12,r4
+		add 	r0,r4
+
+	; OOB check
+		mov	@r4,r2
+		mov	@(4,r4),r3
+		mov	@(8,r4),r4
+		cmp/pz	r4
+		bt	.offpnts
+		mov	#MAX_ZDISTANCE,r0	; max Z far
+		cmp/gt	r0,r4
+		bf	.offpnts
+		
+		mov 	#160,r0
+		cmp/eq	r0,r2
+		bt	.offpnts
+		mov 	#112,r0
+		cmp/eq	r0,r2
+		bt	.offpnts
+		
+		mov	#-160,r0		; X out
+		cmp/ge	r0,r2
+		bf	.offpnts
+		neg	r0,r0
+		cmp/gt	r0,r2
+		bt	.offpnts
+		mov	#-112,r0		; Y out
+		cmp/ge	r0,r3
+		bf	.offpnts
+		neg	r0,r0
+		cmp/gt	r0,r3
+		bf	.inside
+.offpnts:
+		add 	#-1,r6
+.inside:
+	; lowest Z
+		cmp/gt	r8,r4
+		bt	.highz
+		mov	r4,r8
+.highz:
+	; Set X/Y
+		mov	#SCREEN_WIDTH/2,r0
+		add 	r2,r0
+		mov.w	r0,@r5
+		mov 	#SCREEN_HEIGHT/2,r0
+		add 	r3,r0
+		mov.w	r0,@(2,r5)
+		add	#4,r5
+		dt	r7
+		bf	.points
+
+	; OOB set?
+		cmp/pl	r6
+		bf	.offbnds
+		mov	r8,@r9			; add Z entry
+		add 	#8,r9
+		add 	#sizeof_polygn,r13
+		
+		mov	#MARSMdl_FaceCnt,r7
+		mov	@r7,r0
+		add 	#1,r0
+		mov 	r0,@r7
+.offbnds:
+		dt	r10
+		bf	.plgnloop
+		
+		mov	#0,r0
+		mov	r0,@(polygn_type,r13)
+		mov	r0,@r9
+
+		mov	#MarsMdl_CurrZtp,r0
+		mov	r9,@r0
+		mov	#MarsMdl_CurrPly,r0
+		mov	r13,@r0
+
+		lds	@r15+,pr
+		rts
+		nop
+		align 4
+; 		ltorg
+
+; ------------------------------------------------
+; Muliply X and Y for perspective
+; persp*256/Z
+; 
+; r4 - Z current
+; ------------------------------------------------
+
+; TODO: use a precalculated list since
+; this method sucks
+
+mdlrd_calcpersp:
+		mov	#384*256,r7
 		mov	r4,r0
-		cmp/pz	r0
+		exts	r0,r0
+		cmp/pl	r0
 		bf	.dontdiv
 		mov 	#1,r0
 .dontdiv:
@@ -1402,63 +1430,31 @@ mdlread_dopersp:
 		dt	r5
 		bf	.waitdx
 		mov	#_HRL,r5
-		mov 	@r5,r5
-		dmuls	r5,r3
-		sts	macl,r3		; new Y
-		cmp/pz	r4
-		bf	.dontfix
-		neg 	r3,r3
-.dontfix:
-
-	; X perspective
-		mov	r4,r0
-		cmp/pz	r0
-		bf	.dontdiv2
-		mov 	#1,r0
-.dontdiv2:
-		mov 	#_JR,r5
-		mov 	r0,@r5
-		nop
-		mov 	r8,@(4,r5)
-		nop
-		mov	#8,r5
-.waitdx2:
-		dt	r5
-		bf	.waitdx2
-		mov	#_HRL,r5
-		mov 	@r5,r5
-		dmuls	r5,r2
+		mov 	@r5,r0
+		
+		dmuls	r0,r2
 		sts	macl,r2		; new X
+		dmuls	r0,r3
+		sts	macl,r3		; new Y
+
 		cmp/pz	r4
-		bf	.dontfix2
+		bf	.lel
 		neg	r2,r2
-.dontfix2:
+		neg	r3,r3
+.lel:
 
-		shlr8	r2
-		exts	r2,r2
-		shlr8	r3
-		exts	r3,r3
-		shlr2	r4
-		exts	r4,r4
-
-		mov	@r15+,r13
-		mov	@r15+,r9
-		mov	@r15+,r8
-		mov	@r15+,r7
-		mov	@r15+,r6
-		mov	@r15+,r5
-		lds	@r15+,pr
+; 	Z bad fix
+; 		mov	#64,r0
+; 		add 	r0,r4
 		rts
 		nop
 		align 4
-		ltorg
 
 ; ------------------------------------------------
 ; r0 - tan
 ; r7 - sine
 ; r8 - cosine
 mdlrd_readsine:
-; 		sts	pr,@-r15
 		shll2	r0
 		mov	#$1FFF,r7
 		and	r7,r0
@@ -1466,7 +1462,6 @@ mdlrd_readsine:
 		mov	#sin_table+$800,r8
 		mov	@(r0,r7),r7
 		mov	@(r0,r8),r8
-; 		lds	@r15+,pr
 		rts
 		nop
 		align 4

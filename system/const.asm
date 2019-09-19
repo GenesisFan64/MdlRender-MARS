@@ -161,7 +161,6 @@ sizeof_mdram	ds.l 0
 		struct RAM_MdSystem
 RAM_InputData	ds.b sizeof_input*4
 RAM_SaveData	ds.b $200		; TODO: save data copy
-RAM_initflug	ds.l 1
 RAM_FrameCount	ds.l 1
 RAM_SysRandVal	ds.l 1
 RAM_SysRandSeed	ds.l 1

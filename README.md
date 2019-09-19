@@ -1,6 +1,5 @@
 # MdlRender-MARS
 3D renderer for the Sega 32X
-
 Stable, supports Z sorting (painter's algorithm)
 
 Notes:
