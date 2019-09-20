@@ -133,27 +133,6 @@ SH2_M_HotStart:
     		mov.b	r0,@(intmask,gbr)
 		mov	#$20,r0
 		ldc	r0,sr
-
-; 		mov 	#-128,r4
-; ; 		
-; 		mov	#160*256,r7
-; 		mov	r4,r0
-; 		cmp/pz	r0
-; 		bf	.dontdiv
-; 		mov 	#1,r0
-; .dontdiv:
-; 		mov 	#_JR,r5
-; 		mov 	r0,@r5
-; 		nop
-; 		mov 	r7,@(4,r5)
-; 		nop
-; 		mov	#8,r5
-; .waitdx:
-; 		mov	#_HRL,r5
-; 		mov 	@r5,r0
-; 		bra	*	
-; 		nop
-
 ; 		mov 	#CACHE_DATA,r1
 ; 		mov 	#$C0000000,r2
 ; 		mov 	#(CACHE_END-CACHE_START)/4,r3
@@ -882,22 +861,22 @@ SH2_S_HotStart:
 		nop
 
 		mov 	#MARSMdl_Objects,r3
+		mov 	#TEST_MODEL_2,r1
+		mov 	r1,@(mdl_data,r3)
+		mov 	#0,r0
+		mov 	r0,@(mdl_x,r3)
+		mov 	r0,@(mdl_y,r3)
+		mov 	#-$A000,r0
+		mov 	r0,@(mdl_z,r3)
+
+		mov 	#MARSMdl_Objects+sizeof_mdl,r3
 		mov 	#TEST_MODEL,r1
 		mov 	r1,@(mdl_data,r3)
 		mov 	#0,r0
 		mov 	r0,@(mdl_x,r3)
 		mov 	r0,@(mdl_y,r3)
-		mov 	#-$8000,r0
-		mov 	r0,@(mdl_z,r3)
-
-; 		mov 	#MARSMdl_Objects+sizeof_mdl,r3
-; 		mov 	#TEST_MODEL_2,r1
-; 		mov 	r1,@(mdl_data,r3)
-; 		mov 	#0,r0
-; 		mov 	r0,@(mdl_x,r3)
-; 		mov 	r0,@(mdl_y,r3)
 ; 		mov 	#-$8000,r0
-; 		mov 	r0,@(mdl_z,r3)
+		mov 	r0,@(mdl_z,r3)
 
 ; --------------------------------------------------------
 ; Loopf
@@ -1180,24 +1159,24 @@ sin_table	binclude "system/mars/data/sinedata.bin"
 ; MARS User data
 ; ----------------------------------------------------------------
 
-TEST_PICTURPAL:	binclude "engine/modes/title/mars/data/mtrl/logos_pal.bin"
+TEST_PICTURPAL:	binclude "engine/data/mtrl/semf_pal.bin"
 		align 4
 
 TEST_MODEL:
-		binclude "engine/modes/title/mars/data/test_head.bin"
+		binclude "engine/data/test_head.bin"
 		dc.l .vert,.face,.vrtx,.mtrl	; vertices, faces, vertex, material
-.vert:		binclude "engine/modes/title/mars/data/test_vert.bin"
-.face:		binclude "engine/modes/title/mars/data/test_face.bin"
-.vrtx:		binclude "engine/modes/title/mars/data/test_vrtx.bin"
-.mtrl:		include "engine/modes/title/mars/data/test_mtrl.asm"
+.vert:		binclude "engine/data/test_vert.bin"
+.face:		binclude "engine/data/test_face.bin"
+.vrtx:		binclude "engine/data/test_vrtx.bin"
+.mtrl:		include "engine/data/test_mtrl.asm"
 
 TEST_MODEL_2:
-		binclude "engine/modes/title/mars/data/cube_head.bin"
+		binclude "engine/data/semaf_head.bin"
 		dc.l .vert,.face,.vrtx,.mtrl	; vertices, faces, vertex, material
-.vert:		binclude "engine/modes/title/mars/data/cube_vert.bin"
-.face:		binclude "engine/modes/title/mars/data/cube_face.bin"
-.vrtx:		binclude "engine/modes/title/mars/data/cube_vrtx.bin"
-.mtrl:		include "engine/modes/title/mars/data/cube_mtrl.asm"
+.vert:		binclude "engine/data/semaf_vert.bin"
+.face:		binclude "engine/data/semaf_face.bin"
+.vrtx:		binclude "engine/data/semaf_vrtx.bin"
+.mtrl:		include "engine/data/semaf_mtrl.asm"
 
 ; ====================================================================
 ; ----------------------------------------------------------------
@@ -1256,6 +1235,7 @@ MarsVid_VIntBit	ds.l 1
 MARSMdl_FaceCnt	ds.l 1
 MarsMdl_CurrPly	ds.l 1
 MarsMdl_CurrZtp	ds.l 1
+; MARSMdl_OutPnts ds.l 3*MAX_VERTICES			; Output vertices for reading
 MARSMdl_ZList	ds.l 2*MAX_POLYGONS			; Polygon address | Polygon Z pos
 MARSVid_Palette	ds.w 256
 MARSMdl_Playfld	ds.b sizeof_plyfld			; Playfield buffer (or camera)

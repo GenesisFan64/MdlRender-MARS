@@ -19,22 +19,51 @@
 ; ----------------------------------------------------------------
 
 		include	"system/mars/head.asm"
-		
+
 ; ====================================================================
 ; ----------------------------------------------------------------
 ; CODE Section
+; 
+; MCD: $FF0000
+; MARS: $880000
 ; ----------------------------------------------------------------
 
-		include	"engine/code.asm"
+Engine_Code:
+		phase $FF0000
+		
+; --------------------------------------------------------
+; Subroutines
+; --------------------------------------------------------
+
+		include	"system/md/system.asm"
+		include	"system/md/video.asm"
+		include	"system/md/sound.asm"
+		include	"engine/global.asm"
 
 ; ====================================================================
-; ----------------------------------------------------------------
-; DATA Sections
-; ----------------------------------------------------------------
+; --------------------------------------------------------
+; INIT
+; --------------------------------------------------------
 
-		phase $900000+*
-		include	"engine/data.asm"
+MD_Main:
+		bsr 	Sound_init
+		bsr 	Video_init
+		bsr	System_Init
+
+; ====================================================================
+; --------------------------------------------------------
+; Main loop
+; --------------------------------------------------------
+
+		include "engine/code.asm"
+
+; ====================================================================
+
 		dephase
+Engine_Code_end:
+	if MOMPASS=7
+		message "MD CODE uses: \{Engine_Code_end-Engine_Code}"
+	endif
 		
 ; ====================================================================
 ; ----------------------------------------------------------------
@@ -68,11 +97,11 @@ MARS_RAMDATA_E:
 		align 4
 ; ---------------------------------------------
 
-Textr_uslogo:	binclude "engine/modes/title/mars/data/mtrl/logos.bin"
+Textr_uslogo:	binclude "engine/data/mtrl/logos.bin"
 		align 4
-Textr_grass:	binclude "engine/modes/title/mars/data/mtrl/grass_art.bin"
+Textr_grass:	binclude "engine/data/mtrl/grass_art.bin"
 		align 4
-Textr_semaf:	binclude "engine/modes/title/mars/data/mtrl/semf_art.bin"
+Textr_semaf:	binclude "engine/data/mtrl/semf_art.bin"
 		align 4
 		
 ; ---------------------------------------------

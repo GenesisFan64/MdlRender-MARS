@@ -1124,6 +1124,7 @@ make_model:
 		cmp/gt	r0,r4
 		bf	.offpnts
 
+	; TODO: mejorar esto
 		mov	#-160,r0		; X out
 		cmp/ge	r0,r2
 		bf	.offpnts
