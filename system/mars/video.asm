@@ -409,8 +409,7 @@ drwpoly_line:
 		bf	.exits
 		shlr	r4
 		mov	r11,r0
-		cmp/pl	r0
-		bf	.exits
+; 		add 	#1,r0
 		shll8	r0
 		mov	r0,r5
 		mov	r7,r0
@@ -1117,36 +1116,38 @@ make_model:
 		bsr	mdlread_dopersp
 		nop
 
+	; -------------------------
 	; OOB check
+	; -------------------------
 		cmp/pz	r4
 		bt	.offpnts
 		mov	#MAX_ZDISTANCE,r0	; max Z far
 		cmp/gt	r0,r4
 		bf	.offpnts
-
-	; TODO: mejorar esto
+	; -------------------------
 		mov	#-160,r0		; X out
 		cmp/ge	r0,r2
 		bf	.offpnts
 		neg	r0,r0
 		cmp/gt	r0,r2
 		bt	.offpnts
+	; -------------------------
 		mov	#-112,r0		; Y out
 		cmp/ge	r0,r3
 		bf	.offpnts
 		neg	r0,r0
 		cmp/gt	r0,r3
 		bf	.inside
+		
+	; -------------------------
 .offpnts:
 		add 	#-1,r6
 .inside:
-	; lowest Z
-		cmp/gt	r8,r4
+		cmp/gt	r8,r4			; lowest Z
 		bt	.highz
 		mov	r4,r8
 .highz:
-	; Set X/Y
-		mov	#SCREEN_WIDTH/2,r0
+		mov	#SCREEN_WIDTH/2,r0	; Set X/Y
 		add 	r2,r0
 		mov.w	r0,@r5
 		mov 	#SCREEN_HEIGHT/2,r0
@@ -1387,7 +1388,6 @@ mdlread_dopersp:
 	; Y perspective
 		mov	#256*256,r8
 		mov	#256*256,r7
-		
 		mov	r4,r0
 		cmp/pz	r0
 		bf	.dontdiv
@@ -1472,54 +1472,3 @@ mdlrd_readsine:
 		nop
 		align 4
 		ltorg
-
-;
-; Rotate point around Z axis
-;
-; Entry:
-;
-; r5: x
-; r6: y
-; r7: theta
-;
-; Returns:
-;
-; r0: (x  cos @) + (y sin @)
-; r1: (x -sin @) + (y cos @)
-;
-; 	align	2
-; 
-; Rotate_Point
-; 
-; 	shll2	r7
-; 	mov	r7,r0
-; 	mov	#sin_table,r1
-; 	mov	#sin_table+$800,r2
-; 	mov	@(r0,r1),r3
-; 	mov	@(r0,r2),r4
-; 
-; 	dmuls.l	r5,r4		; x cos @
-; 	sts	macl,r0
-; 	sts	mach,r1
-; 	xtrct	r1,r0
-; 	dmuls.l	r6,r3		; y sin @
-; 	sts	macl,r1
-; 	sts	mach,r2
-; 	xtrct	r2,r1
-; 	add	r1,r0
-; 
-; 	neg	r3,r3
-; 	dmuls.l	r5,r3		; x -sin @
-; 	sts	macl,r1
-; 	sts	mach,r2
-; 	xtrct	r2,r1
-; 	dmuls.l	r6,r4		; y cos @
-; 	sts	macl,r2
-; 	sts	mach,r3
-; 	xtrct	r3,r2
-; 	add	r2,r1
-; 
-; 	rts
-; 	nop
-; 
-; rot_angle	dc.l	0

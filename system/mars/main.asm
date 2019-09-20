@@ -1171,12 +1171,12 @@ TEST_MODEL:
 .mtrl:		include "engine/data/test_mtrl.asm"
 
 TEST_MODEL_2:
-		binclude "engine/data/semaf_head.bin"
+		binclude "engine/data/cube_head.bin"
 		dc.l .vert,.face,.vrtx,.mtrl	; vertices, faces, vertex, material
-.vert:		binclude "engine/data/semaf_vert.bin"
-.face:		binclude "engine/data/semaf_face.bin"
-.vrtx:		binclude "engine/data/semaf_vrtx.bin"
-.mtrl:		include "engine/data/semaf_mtrl.asm"
+.vert:		binclude "engine/data/cube_vert.bin"
+.face:		binclude "engine/data/cube_face.bin"
+.vrtx:		binclude "engine/data/cube_vrtx.bin"
+.mtrl:		include "engine/data/cube_mtrl.asm"
 
 ; ====================================================================
 ; ----------------------------------------------------------------
