@@ -157,6 +157,10 @@ SH2_M_HotStart:
 ; --------------------------------------------------------
 
 master_loop:
+		mov.w 	@(comm10,gbr),r0
+		cmp/eq	#1,r0
+		bf	.m_vblank
+		
 		mov	#MarsMdl_Playfld,r4
 		mov 	#$100,r5		; speed
 
@@ -303,11 +307,11 @@ master_loop:
 .no_b2:
 		mov 	r1,@(mdl_x_rot,r4)
 
-		
 ; -------------------------------------------
 ; Wait VBLANK
 ; -------------------------------------------
 
+.m_vblank:
 		mov 	#1,r0
 		mov	#MarsVid_VIntBit,r1
 		mov 	r0,@r1
@@ -320,10 +324,10 @@ master_loop:
 		mov.w 	r0,@(comm0,gbr)
 		mov.w 	@(comm10,gbr),r0
 		cmp/eq	#1,r0
-		bf	.lol2
+		bf	.free
 		bra	master_loop
 		nop
-.lol2:
+.free:
 		mov 	#1,r0
 		mov.w	r0,@(comm10,gbr)
 		mov.w 	@(comm2,gbr),r0
@@ -861,15 +865,15 @@ SH2_S_HotStart:
 		nop
 
 		mov 	#MARSMdl_Objects,r3
-		mov 	#TEST_MODEL_2,r1
-		mov 	r1,@(mdl_data,r3)
-		mov 	#0,r0
-		mov 	r0,@(mdl_x,r3)
-		mov 	r0,@(mdl_y,r3)
-		mov 	#-$A000,r0
-		mov 	r0,@(mdl_z,r3)
+; 		mov 	#TEST_MODEL_2,r1
+; 		mov 	r1,@(mdl_data,r3)
+; 		mov 	#0,r0
+; 		mov 	r0,@(mdl_x,r3)
+; 		mov 	r0,@(mdl_y,r3)
+; 		mov 	#-$4000,r0
+; 		mov 	r0,@(mdl_z,r3)
 
-		mov 	#MARSMdl_Objects+sizeof_mdl,r3
+; 		mov 	#MARSMdl_Objects+sizeof_mdl,r3
 		mov 	#TEST_MODEL,r1
 		mov 	r1,@(mdl_data,r3)
 		mov 	#0,r0
@@ -899,7 +903,7 @@ slave_loop:
 	; -----------------------------------
 	; Render polygons
 	; -----------------------------------
-		mov 	#MARSMdl_ZList,r2
+		mov 	#MarsPly_ZList,r2
 .next:
 		mov	@r2,r0
 		cmp/eq	#0,r0
@@ -1236,7 +1240,7 @@ MARSMdl_FaceCnt	ds.l 1
 MarsMdl_CurrPly	ds.l 1
 MarsMdl_CurrZtp	ds.l 1
 ; MARSMdl_OutPnts ds.l 3*MAX_VERTICES			; Output vertices for reading
-MARSMdl_ZList	ds.l 2*MAX_POLYGONS			; Polygon address | Polygon Z pos
+MarsPly_ZList	ds.l 2*MAX_POLYGONS			; Polygon address | Polygon Z pos
 MARSVid_Palette	ds.w 256
 MARSMdl_Playfld	ds.b sizeof_plyfld			; Playfield buffer (or camera)
 MARSVid_Polygns	ds.b sizeof_polygn*MAX_POLYGONS		; Polygon data

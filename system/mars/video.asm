@@ -18,7 +18,7 @@
 MAX_VERTICES	equ	2730;2048
 MAX_POLYGONS	equ	1024
 MAX_MODELS	equ	64
-MAX_ZDISTANCE	equ	-192		; lower distance, more stable
+MAX_ZDISTANCE	equ	-128		; lower distance, more stable
 
 ; ----------------------------------------
 ; Variables
@@ -152,7 +152,7 @@ MarsVideo_Init:
 
 ; MarsVideo_Render:
 ; 		sts	pr,@-r15
-; 		mov 	#MarsMdl_ZList,r2
+; 		mov 	#MarsPly_ZList,r2
 ; .next:
 ; 		mov	@r2,r0
 ; 		cmp/eq	#0,r0
@@ -952,7 +952,7 @@ MarsMdl_Run:
 		mov	#MARSVid_Polygns,r0
 		mov	r0,@r2
 		mov	#MarsMdl_CurrZtp,r2
-		mov	#MarsMdl_ZList+4,r0
+		mov	#MarsPly_ZList+4,r0
 		mov	r0,@r2		
 		mov	#MarsMdl_FaceCnt,r2
 		mov	#0,r0
@@ -975,8 +975,8 @@ MarsMdl_Run:
 ; Painters algorithm
 ; ------------------------------------------------
 
-		mov	#MarsMdl_ZList+4,r14	; Z points
-		mov	#MarsMdl_ZList,r13	; polygon addreses	
+		mov	#MarsPly_ZList+4,r14	; Z points
+		mov	#MarsPly_ZList,r13	; polygon addreses	
 		mov	#MARSVid_Polygns,r12	; polygon list
 		mov	#MAX_ZDISTANCE,r11	; max Z distance
 		mov	#MarsMdl_FaceCnt,r10	; numof_faces
@@ -991,7 +991,7 @@ MarsMdl_Run:
 		mov	@r14,r0			; grab Z pos
 		cmp/eq	#0,r0			; 0 - endoflist
 		bf	.nores
-		mov	#MarsMdl_ZList+4,r14	; Z list
+		mov	#MarsPly_ZList+4,r14	; Z list
 		mov	#MARSVid_Polygns,r12	; polygon list
 		bra	.next
 		add 	#1,r11			; Z distance + 1
@@ -1301,15 +1301,17 @@ mdlread_dopersp:
 	; PASS 2
 		mov	@(plyfld_x,r13),r0
 		shlr8	r0
+		shlr	r0
 		exts	r0,r0
 		sub 	r0,r2
 		mov	@(plyfld_y,r13),r0
 		shlr8	r0
+		shlr	r0
 		exts	r0,r0
 		sub 	r0,r3
 		mov	@(plyfld_z,r13),r0
 		shlr8	r0
-		shll	r0
+; 		shlr	r0
 		exts	r0,r0
 		add 	r0,r4
 		mov	@(plyfld_x_rot,r13),r0	; X rotation
