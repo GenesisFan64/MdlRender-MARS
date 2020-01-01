@@ -22,6 +22,7 @@ import sys
 
 SCALE_SIZE=0x100
 FROM_BLENDER=False #True
+img_width = 1
 
 # ======================================================================
 # -------------------------------------------------
@@ -32,7 +33,7 @@ num_vert      = 0
 has_img       = False
 
 projectname   = sys.argv[1]
-CONVERT_TEX=0
+CONVERT_TEX=1
 
 INCR_Y=0
 if len(sys.argv) == 3:
@@ -187,12 +188,12 @@ while reading:
               if b.find("map_Kd") == False:
                   tex_fname = b[7:].rstrip('\r\n')
                   tex_file = open(tex_fname,"rb")
-
+                  
                   # COPYPASTED
                   tex_file.seek(1)
                   color_type = ord(tex_file.read(1))
                   image_type = ord(tex_file.read(1))
-
+                 
                   if color_type == 1:
                     pal_start = ord(tex_file.read(1))
                     pal_start += ord(tex_file.read(1)) << 8
@@ -239,7 +240,7 @@ while reading:
                         output_file.write( bytes([ ((a>>8)&0xFF) , (a&0xFF) ]))
                       output_file.close()
                       
-                      art_file = open("mtrl/"+outname+".bin","wb")
+                      art_file = open("mtrl/"+outname+"_art.bin","wb")
                       b = img_height
                       e = 0
                       while b:

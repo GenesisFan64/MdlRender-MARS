@@ -15,10 +15,10 @@
 ; Settings
 ; ----------------------------------------
 
-MAX_VERTICES	equ	2730;2048
+MAX_VERTICES	equ	1024;2048
 MAX_POLYGONS	equ	1024
 MAX_MODELS	equ	64
-MAX_ZDISTANCE	equ	-128		; lower distance, more stable
+MAX_ZDISTANCE	equ	-1024		; lower distance, more stable
 
 ; ----------------------------------------
 ; Variables
@@ -1124,20 +1124,23 @@ make_model:
 		mov	#MAX_ZDISTANCE,r0	; max Z far
 		cmp/gt	r0,r4
 		bf	.offpnts
-	; -------------------------
+; 	; -------------------------
 		mov	#-160,r0		; X out
 		cmp/ge	r0,r2
 		bf	.offpnts
 		neg	r0,r0
 		cmp/gt	r0,r2
 		bt	.offpnts
-	; -------------------------
+; 	; -------------------------
 		mov	#-112,r0		; Y out
 		cmp/ge	r0,r3
 		bf	.offpnts
 		neg	r0,r0
 		cmp/gt	r0,r3
 		bf	.inside
+		
+; 		bra	.inside
+; 		nop
 		
 	; -------------------------
 .offpnts:
@@ -1196,7 +1199,8 @@ make_model:
 ; ------------------------------------------------
 ; Muliply X and Y for perspective
 ; persp*256/Z
-; 
+; r2 - X
+; r3 - Y
 ; r4 - Z current
 ; ------------------------------------------------
 
@@ -1212,6 +1216,7 @@ mdlread_dopersp:
 
 	; PASS 1
 		mov	@(mdl_x_rot,r14),r0	; X rotation
+		shlr	r0
 		bsr	mdlrd_readsine
 		shlr8	r0
 		dmuls	r2,r8		; X cos @
@@ -1235,6 +1240,7 @@ mdlread_dopersp:
 		add	r0,r6
 		mov 	r5,r2		; Save X	
 		mov	@(mdl_y_rot,r14),r0	; Y rotation
+		shlr	r0
 		bsr	mdlrd_readsine
 		shlr8	r0		
 		mov	r3,r9
@@ -1260,6 +1266,7 @@ mdlread_dopersp:
 		add	r5,r9
 		mov	r9,r4		; Save Z
 		mov	@(mdl_z_rot,r14),r0	; Z rotation
+		shlr	r0
 		shlr8	r0
 		bsr	mdlrd_readsine
 		add 	r7,r0
@@ -1311,10 +1318,11 @@ mdlread_dopersp:
 		sub 	r0,r3
 		mov	@(plyfld_z,r13),r0
 		shlr8	r0
-; 		shlr	r0
+		shlr	r0
 		exts	r0,r0
 		add 	r0,r4
 		mov	@(plyfld_x_rot,r13),r0	; X rotation
+		shlr	r0
 		bsr	mdlrd_readsine
 		shlr8	r0
 		dmuls	r2,r8		; X cos @
@@ -1338,8 +1346,9 @@ mdlread_dopersp:
 		add	r0,r6
 		mov 	r5,r2		; Save X	
 		mov	@(plyfld_y_rot,r13),r0	; Y rotation
+		shlr	r0
 		bsr	mdlrd_readsine
-		shlr8	r0		
+		shlr8	r0
 		mov	r3,r9
 		dmuls	r3,r8		; Y cos @
 		sts	macl,r9
@@ -1364,6 +1373,7 @@ mdlread_dopersp:
 		mov	r9,r4		; Save Z
 		mov	@(plyfld_z_rot,r13),r0	; Z rotation
 		shlr8	r0
+		shlr	r0
 		bsr	mdlrd_readsine
 		add 	r7,r0
 		dmuls	r2,r8		; X cos @
@@ -1388,8 +1398,9 @@ mdlread_dopersp:
 		mov 	r5,r2		; Save X
 
 	; Y perspective
-		mov	#256*256,r8
-		mov	#256*256,r7
+		mov	#160*256,r7
+		shlr	r4
+		exts	r4,r4
 		mov	r4,r0
 		cmp/pz	r0
 		bf	.dontdiv
@@ -1413,23 +1424,23 @@ mdlread_dopersp:
 		neg 	r3,r3
 .dontfix:
 
-	; X perspective
-		mov	r4,r0
-		cmp/pz	r0
-		bf	.dontdiv2
-		mov 	#1,r0
-.dontdiv2:
-		mov 	#_JR,r5
-		mov 	r0,@r5
-		nop
-		mov 	r8,@(4,r5)
-		nop
-		mov	#8,r5
-.waitdx2:
-		dt	r5
-		bf	.waitdx2
-		mov	#_HRL,r5
-		mov 	@r5,r5
+; 	; X perspective
+; 		mov	r4,r0
+; 		cmp/pz	r0
+; 		bf	.dontdiv2
+; 		mov 	#1,r0
+; .dontdiv2:
+; 		mov 	#_JR,r5
+; 		mov 	r0,@r5
+; 		nop
+; 		mov 	r8,@(4,r5)
+; 		nop
+; 		mov	#8,r5
+; .waitdx2:
+; 		dt	r5
+; 		bf	.waitdx2
+; 		mov	#_HRL,r5
+; 		mov 	@r5,r5
 		dmuls	r5,r2
 		sts	macl,r2		; new X
 		cmp/pz	r4
@@ -1438,10 +1449,10 @@ mdlread_dopersp:
 .dontfix2:
 
 		shlr8	r2
-		exts	r2,r2
 		shlr8	r3
+; 		shlr2	r4
+		exts	r2,r2
 		exts	r3,r3
-		shlr2	r4
 		exts	r4,r4
 
 		mov	@r15+,r13

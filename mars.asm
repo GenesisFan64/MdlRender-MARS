@@ -97,11 +97,12 @@ MARS_RAMDATA_E:
 		align 4
 ; ---------------------------------------------
 
-Textr_uslogo:	binclude "engine/data/mtrl/logos.bin"
-		align 4
-Textr_grass:	binclude "engine/data/mtrl/grass_art.bin"
-		align 4
-Textr_semaf:	binclude "engine/data/mtrl/semf_art.bin"
+; Textr_uslogo:	binclude "engine/data/mtrl/logos.bin"
+; 		align 4
+; Textr_grass:	binclude "engine/data/mtrl/grass_art.bin"
+; 		align 4
+Textr_TestTexture:
+		binclude "engine/data/mtrl/grass_art.bin"
 		align 4
 		
 ; ---------------------------------------------

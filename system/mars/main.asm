@@ -157,12 +157,12 @@ SH2_M_HotStart:
 ; --------------------------------------------------------
 
 master_loop:
-		mov.w 	@(comm10,gbr),r0
-		cmp/eq	#1,r0
-		bf	.m_vblank
+; 		mov.w 	@(comm10,gbr),r0
+; 		cmp/eq	#1,r0
+; 		bf	.m_vblank
 		
 		mov	#MarsMdl_Playfld,r4
-		mov 	#$100,r5		; speed
+		mov 	#$400,r5		; speed
 
 ; 	; X Y Z
 		mov 	@(plyfld_z,r4),r1
@@ -879,7 +879,7 @@ SH2_S_HotStart:
 		mov 	#0,r0
 		mov 	r0,@(mdl_x,r3)
 		mov 	r0,@(mdl_y,r3)
-; 		mov 	#-$8000,r0
+		mov 	#-$18000,r0
 		mov 	r0,@(mdl_z,r3)
 
 ; --------------------------------------------------------
@@ -1150,7 +1150,7 @@ SH2_Error:
 		include "system/mars/video.asm"
 		include "system/mars/sound.asm"
 		align 4
-		
+
 ; ====================================================================
 ; ----------------------------------------------------------------
 ; MARS DATA
@@ -1158,29 +1158,7 @@ SH2_Error:
 
 sin_table	binclude "system/mars/data/sinedata.bin"
 
-; ====================================================================
-; ----------------------------------------------------------------
-; MARS User data
-; ----------------------------------------------------------------
-
-TEST_PICTURPAL:	binclude "engine/data/mtrl/semf_pal.bin"
-		align 4
-
-TEST_MODEL:
-		binclude "engine/data/test_head.bin"
-		dc.l .vert,.face,.vrtx,.mtrl	; vertices, faces, vertex, material
-.vert:		binclude "engine/data/test_vert.bin"
-.face:		binclude "engine/data/test_face.bin"
-.vrtx:		binclude "engine/data/test_vrtx.bin"
-.mtrl:		include "engine/data/test_mtrl.asm"
-
-TEST_MODEL_2:
-		binclude "engine/data/cube_head.bin"
-		dc.l .vert,.face,.vrtx,.mtrl	; vertices, faces, vertex, material
-.vert:		binclude "engine/data/cube_vert.bin"
-.face:		binclude "engine/data/cube_face.bin"
-.vrtx:		binclude "engine/data/cube_vrtx.bin"
-.mtrl:		include "engine/data/cube_mtrl.asm"
+		include "system/mars/data.asm"
 
 ; ====================================================================
 ; ----------------------------------------------------------------
