@@ -157,12 +157,8 @@ SH2_M_HotStart:
 ; --------------------------------------------------------
 
 master_loop:
-; 		mov.w 	@(comm10,gbr),r0
-; 		cmp/eq	#1,r0
-; 		bf	.m_vblank
-		
 		mov	#MarsMdl_Playfld,r4
-		mov 	#$400,r5		; speed
+		mov 	#$100*$20,r5		; speed
 
 ; 	; X Y Z
 		mov 	@(plyfld_z,r4),r1
@@ -325,7 +321,7 @@ master_loop:
 		mov.w 	@(comm10,gbr),r0
 		cmp/eq	#1,r0
 		bf	.free
-		bra	master_loop
+		bra	.m_vblank
 		nop
 .free:
 		mov 	#1,r0
@@ -334,131 +330,6 @@ master_loop:
 		add 	#1,r0
 		mov.w 	r0,@(comm2,gbr)
 		bra	master_loop
-		nop
-		align 4
-		ltorg
-
-; ====================================================================
-; ----------------------------------------------------------------
-; Master CPU MD Requests
-; ----------------------------------------------------------------
-
-		align 4
-Mstr_MD_Tasks:
-		dc.l .null_task		; $00
-		dc.l .null_task
-		dc.l .null_task
-		dc.l .null_task
-		dc.l .null_task		; $04
-		dc.l .null_task
-		dc.l .null_task
-		dc.l .null_task
-		dc.l .null_task		; $08
-		dc.l .null_task
-		dc.l .null_task
-		dc.l .null_task
-		dc.l .null_task		; $0C
-		dc.l .null_task
-		dc.l .null_task
-		dc.l .null_task
-
-		dc.l .task_10		; $10
-		dc.l .task_11
-		dc.l .null_task
-		dc.l .null_task
-		dc.l .null_task		; $14
-		dc.l .null_task
-		dc.l .null_task
-		dc.l .null_task
-		dc.l .null_task		; $18
-		dc.l .null_task
-		dc.l .null_task
-		dc.l .null_task
-		dc.l .null_task		; $1C
-		dc.l .null_task
-		dc.l .null_task
-		dc.l .null_task
-		
-; --------------------------------------------------------
-; $00 - null
-; --------------------------------------------------------
-
-.null_task:
-		rts
-		nop
-		align 4
-
-; --------------------------------------------------------
-; $10 - Set new Model
-; --------------------------------------------------------
-
-.task_10:
-		mov 	#$FFFF,r2
-		mov.w	@(comm0,gbr),r0
-		shll16	r0
-		mov 	r0,r1
-		mov.w	@(comm2,gbr),r0
-		and 	r2,r0
-		or	r1,r0
-		mov	r0,r1
-		mov	@(comm4,gbr),r0
-		mov	#sizeof_mdl,r2
-		mulu	r0,r2
-		sts	macl,r0
-
-		mov 	#MARSMdl_Objects,r3
-		add 	r0,r3
-		mov 	r1,@(mdl_data,r3)
-		mov.w	@(comm6,gbr),r0
-		mov	r0,r1
-		mov.w	@(comm8,gbr),r0
-		mov	r0,r2
-		mov.w	@(comm10,gbr),r0
-		mov 	r1,@(mdl_x,r3)
-		mov 	r2,@(mdl_y,r3)
-		mov 	r0,@(mdl_z,r3)
-		rts
-		nop
-		align 4
-
-; --------------------------------------------------------
-; $11 - Move model
-; --------------------------------------------------------
-
-.task_11:
-		mov	#0,r0
-		mov.w	@(comm0,gbr),r0
-		mov	#sizeof_mdl,r2
-		mulu	r2,r0
-		sts	macl,r0
-		mov 	#MARSMdl_Objects,r8
-		add 	r0,r8
-		
-		mov.w	@(comm2,gbr),r0
-		mov	r0,r1
-		mov.w	@(comm4,gbr),r0
-		mov	r0,r2
-		mov.w	@(comm6,gbr),r0
-		mov 	r0,r3
-		mov.w	@(comm8,gbr),r0
-		mov	r0,r4
-		mov.w	@(comm10,gbr),r0
-		mov	r0,r5
-		mov.w	@(comm12,gbr),r0
-		
-		shll8	r1
-		shll8	r2
-		shll8	r3
-		shll8	r4
-		shll8	r5
-		shll8	r0
-		mov 	r1,@(mdl_x,r8)
-		mov 	r2,@(mdl_y,r8)
-		mov 	r3,@(mdl_z,r8)
-		mov 	r4,@(mdl_x_rot,r8)
-		mov 	r5,@(mdl_y_rot,r8)
-		mov 	r0,@(mdl_z_rot,r8)
-		rts
 		nop
 		align 4
 		ltorg
@@ -879,7 +750,7 @@ SH2_S_HotStart:
 		mov 	#0,r0
 		mov 	r0,@(mdl_x,r3)
 		mov 	r0,@(mdl_y,r3)
-		mov 	#-$18000,r0
+; 		mov 	#-$8000,r0
 		mov 	r0,@(mdl_z,r3)
 
 ; --------------------------------------------------------
@@ -1215,7 +1086,7 @@ sizeof_marssnd	ds.l 0
 MARSVid_LastFb	ds.l 1
 MarsVid_VIntBit	ds.l 1
 MARSMdl_FaceCnt	ds.l 1
-MarsMdl_CurrPly	ds.l 1
+MarsMdl_CurrPly	ds.l 2
 MarsMdl_CurrZtp	ds.l 1
 ; MARSMdl_OutPnts ds.l 3*MAX_VERTICES			; Output vertices for reading
 MarsPly_ZList	ds.l 2*MAX_POLYGONS			; Polygon address | Polygon Z pos

@@ -15,10 +15,9 @@
 ; Settings
 ; ----------------------------------------
 
-MAX_VERTICES	equ	1024;2048
 MAX_POLYGONS	equ	1024
 MAX_MODELS	equ	64
-MAX_ZDISTANCE	equ	-1024		; lower distance, more stable
+MAX_ZDISTANCE	equ	-256		; lower distance, more stable
 
 ; ----------------------------------------
 ; Variables
@@ -81,10 +80,6 @@ sizeof_polygn	ds.l 0
 PolyRndr_Left	ds.b sizeof_plydda*4
 PolyRndr_Right	ds.b sizeof_plydda*4
 		finish
-
-; 		struct $C0000000
-; MarsMdl_OutPnts ds.l 3*MAX_VERTICES			; Output vertices for reading
-; 		finish
 		
 ; ====================================================================
 ; ----------------------------------------------------------------
@@ -284,7 +279,7 @@ MarsVideo_DrwPoly:
 		cmp/pz	r11
 		bf	.ymin
 		mov 	#SCREEN_HEIGHT,r0
-		cmp/ge	r0,r11
+		cmp/gt	r0,r11
 		bt	.exit
 		bsr	drwpoly_line
 		nop
@@ -1121,26 +1116,36 @@ make_model:
 	; -------------------------
 		cmp/pz	r4
 		bt	.offpnts
+		mov	r5,@-r15
 		mov	#MAX_ZDISTANCE,r0	; max Z far
+; 		mov	r3,r5
+; 		shlr2	r5
+; 		exts	r5,r5
+; 		cmp/pl	r5
+; 		bf	.zlow
+; 		neg	r5,r5
+; .zlow:
+; 		mov	#-1024,r5
+; 		add 	r5,r0
+		mov	@r15+,r5
 		cmp/gt	r0,r4
 		bf	.offpnts
-; 	; -------------------------
+		
+	; -------------------------
+	; GOOD checks
+	; -------------------------
 		mov	#-160,r0		; X out
 		cmp/ge	r0,r2
 		bf	.offpnts
 		neg	r0,r0
 		cmp/gt	r0,r2
 		bt	.offpnts
-; 	; -------------------------
 		mov	#-112,r0		; Y out
 		cmp/ge	r0,r3
 		bf	.offpnts
 		neg	r0,r0
 		cmp/gt	r0,r3
 		bf	.inside
-		
-; 		bra	.inside
-; 		nop
 		
 	; -------------------------
 .offpnts:
@@ -1157,16 +1162,16 @@ make_model:
 		add 	r3,r0
 		mov.w	r0,@(2,r5)
 		add	#4,r5
+.skipme:
 		dt	r7
 		bf	.points
 
-	; OOB set?
+	; OOB check
 		cmp/pl	r6
 		bf	.offbnds
 		mov	r8,@r9			; add Z entry
 		add 	#8,r9
 		add 	#sizeof_polygn,r13
-		
 		mov	#MarsMdl_FaceCnt,r7
 		mov	@r7,r0
 		add 	#1,r0
@@ -1177,6 +1182,7 @@ make_model:
 .tomuch:
 		mov 	r0,@r7
 .offbnds:
+
 		dt	r10
 		bf	.plgnloop
 		
@@ -1216,7 +1222,7 @@ mdlread_dopersp:
 
 	; PASS 1
 		mov	@(mdl_x_rot,r14),r0	; X rotation
-		shlr	r0
+; 		shlr	r0
 		bsr	mdlrd_readsine
 		shlr8	r0
 		dmuls	r2,r8		; X cos @
@@ -1240,7 +1246,7 @@ mdlread_dopersp:
 		add	r0,r6
 		mov 	r5,r2		; Save X	
 		mov	@(mdl_y_rot,r14),r0	; Y rotation
-		shlr	r0
+; 		shlr	r0
 		bsr	mdlrd_readsine
 		shlr8	r0		
 		mov	r3,r9
@@ -1266,7 +1272,7 @@ mdlread_dopersp:
 		add	r5,r9
 		mov	r9,r4		; Save Z
 		mov	@(mdl_z_rot,r14),r0	; Z rotation
-		shlr	r0
+; 		shlr	r0
 		shlr8	r0
 		bsr	mdlrd_readsine
 		add 	r7,r0
@@ -1301,28 +1307,28 @@ mdlread_dopersp:
 		add 	r0,r3
 		mov	@(mdl_z,r14),r0
 		shlr8	r0
-		shll	r0
+		shll2	r0
 		exts	r0,r0
 		add 	r0,r4
 
 	; PASS 2
 		mov	@(plyfld_x,r13),r0
 		shlr8	r0
-		shlr	r0
+; 		shlr	r0
 		exts	r0,r0
 		sub 	r0,r2
 		mov	@(plyfld_y,r13),r0
 		shlr8	r0
-		shlr	r0
+; 		shlr	r0
 		exts	r0,r0
 		sub 	r0,r3
 		mov	@(plyfld_z,r13),r0
 		shlr8	r0
-		shlr	r0
+; 		shlr	r0
 		exts	r0,r0
 		add 	r0,r4
 		mov	@(plyfld_x_rot,r13),r0	; X rotation
-		shlr	r0
+; 		shlr	r0
 		bsr	mdlrd_readsine
 		shlr8	r0
 		dmuls	r2,r8		; X cos @
@@ -1346,7 +1352,7 @@ mdlread_dopersp:
 		add	r0,r6
 		mov 	r5,r2		; Save X	
 		mov	@(plyfld_y_rot,r13),r0	; Y rotation
-		shlr	r0
+; 		shlr	r0
 		bsr	mdlrd_readsine
 		shlr8	r0
 		mov	r3,r9
@@ -1373,7 +1379,7 @@ mdlread_dopersp:
 		mov	r9,r4		; Save Z
 		mov	@(plyfld_z_rot,r13),r0	; Z rotation
 		shlr8	r0
-		shlr	r0
+; 		shlr	r0
 		bsr	mdlrd_readsine
 		add 	r7,r0
 		dmuls	r2,r8		; X cos @
@@ -1423,37 +1429,29 @@ mdlread_dopersp:
 		bf	.dontfix
 		neg 	r3,r3
 .dontfix:
-
-; 	; X perspective
-; 		mov	r4,r0
-; 		cmp/pz	r0
-; 		bf	.dontdiv2
-; 		mov 	#1,r0
-; .dontdiv2:
-; 		mov 	#_JR,r5
-; 		mov 	r0,@r5
-; 		nop
-; 		mov 	r8,@(4,r5)
-; 		nop
-; 		mov	#8,r5
-; .waitdx2:
-; 		dt	r5
-; 		bf	.waitdx2
-; 		mov	#_HRL,r5
-; 		mov 	@r5,r5
 		dmuls	r5,r2
 		sts	macl,r2		; new X
 		cmp/pz	r4
 		bf	.dontfix2
 		neg	r2,r2
 .dontfix2:
-
 		shlr8	r2
 		shlr8	r3
-; 		shlr2	r4
+		shlr	r4
 		exts	r2,r2
 		exts	r3,r3
 		exts	r4,r4
+
+; 		cmp/pl	r4
+; 		bt	.zlow
+; 		mov	r3,r0
+; 		shll2	r0
+; 		cmp/pl	r3
+; 		bt	.ylow
+; 		neg	r0,r0
+; .ylow:
+; 		add 	r0,r4
+; .zlow:
 
 		mov	@r15+,r13
 		mov	@r15+,r9

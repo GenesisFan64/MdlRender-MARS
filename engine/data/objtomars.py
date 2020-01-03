@@ -153,15 +153,16 @@ while reading:
     a = mtlname[:8]
     
     if a == "None":
+      print("Material: None")
       has_img = False
       random_mode = True
       
     # SOLID COLOR
-    elif a == "MARSINDX":
+    elif a == "MARSCOLOR":
       a = mtlname.split("_")
       out_mtrl.write("\t dc.l "+str(a[1])+","+str(0)+"\n")
       indx_color = int(a[1])
-      
+      print("Material: Color ID",indx_color)
       img_width = 1
       img_height = 1
       has_img = False

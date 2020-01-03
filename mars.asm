@@ -102,7 +102,7 @@ MARS_RAMDATA_E:
 ; Textr_grass:	binclude "engine/data/mtrl/grass_art.bin"
 ; 		align 4
 Textr_TestTexture:
-		binclude "engine/data/mtrl/grass_art.bin"
+		binclude "engine/data/mtrl/rubia_art.bin"
 		align 4
 		
 ; ---------------------------------------------
