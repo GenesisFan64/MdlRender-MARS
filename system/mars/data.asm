@@ -5,7 +5,7 @@
 ; this data is stored on SDRAM
 ; ----------------------------------------------------------------
 
-TEST_PICTURPAL:	binclude "engine/data/mtrl/grass_pal.bin"
+TEST_PICTURPAL:	binclude "engine/data/mtrl/doremi_pal.bin"
 		align 4
 
 TEST_MODEL:

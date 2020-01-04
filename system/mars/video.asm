@@ -15,9 +15,10 @@
 ; Settings
 ; ----------------------------------------
 
-MAX_POLYGONS	equ	1024
-MAX_MODELS	equ	64
-MAX_ZDISTANCE	equ	-256		; lower distance, more stable
+MAX_POLYGONS		equ	1024
+MAX_MODELS		equ	64
+MAX_ZDIST_FAR		equ	-1024		; lower distance, more stable
+MAX_ZDIST_CNTR		equ	-512
 
 ; ----------------------------------------
 ; Variables
@@ -943,15 +944,19 @@ MarsMdl_Init:
 
 MarsMdl_Run:
 		sts	pr,@-r15
-		mov	#MarsMdl_CurrPly,r2	; Reset stuff
+		mov	#MarsMdl_CurrZds,r2	; Reset far Z
+		mov	#MAX_ZDIST_FAR,r0
+		mov	r0,@r2
+		mov	#MarsMdl_CurrPly,r2	; Reset START polygon
 		mov	#MARSVid_Polygns,r0
 		mov	r0,@r2
-		mov	#MarsMdl_CurrZtp,r2
+		mov	#MarsMdl_CurrZtp,r2	; Reset Z point out
 		mov	#MarsPly_ZList+4,r0
 		mov	r0,@r2		
-		mov	#MarsMdl_FaceCnt,r2
+		mov	#MarsMdl_FaceCnt,r2	; Reset FACE counter
 		mov	#0,r0
 		mov	r0,@r2
+		mov.w	r0,@(comm6,gbr)
 
 		mov 	#MarsMdl_Objects,r14
 .loop:
@@ -970,12 +975,15 @@ MarsMdl_Run:
 ; Painters algorithm
 ; ------------------------------------------------
 
-		mov	#MarsPly_ZList+4,r14	; Z points
+		mov	#MarsPly_ZList+4,r14	; Z points BASE
 		mov	#MarsPly_ZList,r13	; polygon addreses	
-		mov	#MARSVid_Polygns,r12	; polygon list
-		mov	#MAX_ZDISTANCE,r11	; max Z distance
+		mov	#MARSVid_Polygns,r12	; polygon list BASE
+		mov	#MAX_ZDIST_FAR,r11	; max Z distance
 		mov	#MarsMdl_FaceCnt,r10	; numof_faces
 		mov	@r10,r10
+		mov	r14,r9			; Z points CURRENT
+		mov	r14,r8			; polygon list CURRENT
+		mov	#sizeof_polygn,r7
 		mov	#0,r0
 		mov	r0,@r13			; clear first entry
 .next:
@@ -983,11 +991,11 @@ MarsMdl_Run:
 		bt	.exit
 		cmp/pl	r10			; out of faces?
 		bf	.exit
-		mov	@r14,r0			; grab Z pos
+		mov	@r9,r0			; grab Z pos
 		cmp/eq	#0,r0			; 0 - endoflist
 		bf	.nores
-		mov	#MarsPly_ZList+4,r14	; Z list
-		mov	#MARSVid_Polygns,r12	; polygon list
+		mov	r14,r9			; Z list
+		mov	r12,r8			; polygon list
 		bra	.next
 		add 	#1,r11			; Z distance + 1
 .nores:
@@ -997,17 +1005,17 @@ MarsMdl_Run:
 		bf	.off
 
 	; Found face
-		mov	r12,@r13		; set address
+		mov	r8,@r13			; set address
 		add 	#8,r13
 		mov	#0,r0
 		mov	r0,@r13
 		add	#1,r0
-		mov	r0,@r14			; mark as set
+		mov	r0,@r9			; mark as set
 		add 	#-1,r10
 .off:
-		add 	#sizeof_polygn,r12
+		add 	r7,r8
 		bra	.next
-		add 	#8,r14			; next Z entry
+		add 	#8,r9			; next Z entry
 .exit:
 
 		lds	@r15+,pr
@@ -1096,6 +1104,8 @@ make_model:
 		mov	r13,r5
 		add 	#polygn_points,r5
 .points:
+		mov	r5,@-r15
+		
 		mov	#0,r0
 		mov.w 	@r11+,r0
 		mov	#$C,r4
@@ -1116,18 +1126,16 @@ make_model:
 	; -------------------------
 		cmp/pz	r4
 		bt	.offpnts
-		mov	r5,@-r15
-		mov	#MAX_ZDISTANCE,r0	; max Z far
-; 		mov	r3,r5
-; 		shlr2	r5
-; 		exts	r5,r5
-; 		cmp/pl	r5
-; 		bf	.zlow
-; 		neg	r5,r5
-; .zlow:
-; 		mov	#-1024,r5
-; 		add 	r5,r0
-		mov	@r15+,r5
+		mov	#MAX_ZDIST_CNTR,r0	; max Z distance (center)
+		mov	r3,r5
+		shll2	r5
+		shll	r5
+		exts	r5,r5
+		cmp/pl	r5
+		bf	.zlow
+		neg	r5,r5
+.zlow:
+		add 	r5,r0
 		cmp/gt	r0,r4
 		bf	.offpnts
 		
@@ -1155,6 +1163,7 @@ make_model:
 		bt	.highz
 		mov	r4,r8
 .highz:
+		mov	@r15+,r5
 		mov	#SCREEN_WIDTH/2,r0	; Set X/Y
 		add 	r2,r0
 		mov.w	r0,@r5
@@ -1175,6 +1184,11 @@ make_model:
 		mov	#MarsMdl_FaceCnt,r7
 		mov	@r7,r0
 		add 	#1,r0
+		
+		mov.w 	@(comm6,gbr),r0		; FACE COUNTER
+		add 	#1,r0
+		mov.w	r0,@(comm6,gbr)
+		
 		mov 	#MAX_POLYGONS,r2
 		cmp/ge	r2,r0
 		bf	.tomuch

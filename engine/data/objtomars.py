@@ -2,18 +2,23 @@
 # OBJ TO MARS
 # 
 # STABLE
-# ======================================================================
-
-import sys
-
-# -------------------------------------------------
-# VALUE SIZES
 # 
+# Usage:
+# objtomars.py objname yadd
+# 
+# Material TAGS:
+# MARSNULL      - Pick random color from index palette
+# MARSINDX_indx - Pick a color from the palette using
+# 		  indexes from 0 to 255
+# 		  
+# VALUE SIZES:
 # Vertices: LONG
 # Faces:    WORD
 # Vertex:   WORD
 # Header:   LONG (numof_vert, numof_faces)
-# -------------------------------------------------
+# ======================================================================
+
+import sys
 
 # ======================================================================
 # -------------------------------------------------
@@ -23,6 +28,8 @@ import sys
 SCALE_SIZE=0x100
 FROM_BLENDER=False #True
 img_width = 1
+TAG_NOMATERIAL = "MARSNULL"
+TAG_MARSCOLOR  = "MARSINDX"
 
 # ======================================================================
 # -------------------------------------------------
@@ -31,6 +38,7 @@ img_width = 1
 
 num_vert      = 0
 has_img       = False
+use_img       = False
 
 projectname   = sys.argv[1]
 CONVERT_TEX=1
@@ -152,24 +160,28 @@ while reading:
     
     a = mtlname[:8]
     
-    if a == "None":
-      print("Material: None")
+    if a == TAG_NOMATERIAL:
+      print("Material: Random")
       has_img = False
+      use_img = False
       random_mode = True
       
     # SOLID COLOR
-    elif a == "MARSCOLOR":
+    elif a == TAG_MARSCOLOR:
       a = mtlname.split("_")
-      out_mtrl.write("\t dc.l "+str(a[1])+","+str(0)+"\n")
+      #out_mtrl.write("\t dc.l "+str(a[1])+","+str(0)+"\n")  <-- if needed
+      #indx_color += 1
       indx_color = int(a[1])
       print("Material: Color ID",indx_color)
-      img_width = 1
-      img_height = 1
+      #img_width = 1
+      #img_height = 1
       has_img = False
+      use_img = False
       random_mode = False
 
     # TEXTURE
     else:
+      use_img = True
       # MATERIAL FILE READ LOOP
       mtlread = True
       while mtlread:
@@ -189,7 +201,6 @@ while reading:
               if b.find("map_Kd") == False:
                   tex_fname = b[7:].rstrip('\r\n')
                   tex_file = open(tex_fname,"rb")
-                  
                   # COPYPASTED
                   tex_file.seek(1)
                   color_type = ord(tex_file.read(1))
@@ -229,7 +240,8 @@ while reading:
 
                     if int(CONVERT_TEX) == True:
                       print("Converting material:",mtlname)
-                      
+                      has_img = True
+
                       output_file = open("mtrl/"+outname+"_pal.bin","wb")
                       d = pal_len
                       while d:
@@ -276,8 +288,9 @@ while reading:
       y_curr=point[1].split("/")
       z_curr=point[2].split("/")
 
+      print(use_img)
       # Set material id and size
-      if has_img == True:
+      if use_img == True:
         a = mtrl_curr
         b = 0x8000|3
       else:
@@ -293,7 +306,7 @@ while reading:
       out_faces.write( bytes([a>>8&0xFF,a&0xFF]) )      # TEXTURE ID
 
       # set texture
-      if has_img == True:
+      if use_img == True:
         # TEXTURE POINTS
         x=int(x_curr[1])-1
         y=int(y_curr[1])-1

@@ -158,7 +158,7 @@ SH2_M_HotStart:
 
 master_loop:
 		mov	#MarsMdl_Playfld,r4
-		mov 	#$100*$20,r5		; speed
+		mov 	#$100*8,r5		; speed
 
 ; 	; X Y Z
 		mov 	@(plyfld_z,r4),r1
@@ -774,6 +774,7 @@ slave_loop:
 	; -----------------------------------
 	; Render polygons
 	; -----------------------------------
+
 		mov 	#MarsPly_ZList,r2
 .next:
 		mov	@r2,r0
@@ -781,6 +782,7 @@ slave_loop:
 		bt	.finish
 		bsr	MarsVideo_DrwPoly
 		mov	r0,r1
+		mov	#0,r0
 		mov 	r0,@r2
 		mov 	r0,@(4,r2)
 .off:
@@ -800,6 +802,23 @@ slave_loop:
 		nop
 		align 4
 		ltorg
+
+	; NO sorting
+; 		mov 	#MARSVid_Polygns,r2
+; .next:
+; 		mov	@(polygn_type,r2),r0
+; 		cmp/eq	#0,r0
+; 		bt	.finish
+; 		bsr	MarsVideo_DrwPoly
+; 		mov	r2,r1
+; 		mov	#0,r0
+; 		mov 	r0,@(polygn_type,r2)
+; .off:
+; 		mov 	#sizeof_polygn,r0
+; 		add 	r0,r2
+; 		bra	.next
+; 		nop
+; .finish:
 
 ; ====================================================================
 ; ----------------------------------------------------------------
@@ -1088,6 +1107,7 @@ MarsVid_VIntBit	ds.l 1
 MARSMdl_FaceCnt	ds.l 1
 MarsMdl_CurrPly	ds.l 2
 MarsMdl_CurrZtp	ds.l 1
+MarsMdl_CurrZds	ds.l 1
 ; MARSMdl_OutPnts ds.l 3*MAX_VERTICES			; Output vertices for reading
 MarsPly_ZList	ds.l 2*MAX_POLYGONS			; Polygon address | Polygon Z pos
 MARSVid_Palette	ds.w 256
