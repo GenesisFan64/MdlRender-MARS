@@ -158,7 +158,7 @@ SH2_M_HotStart:
 
 master_loop:
 		mov	#MarsMdl_Playfld,r4
-		mov 	#$100*8,r5		; speed
+		mov 	#$100*4,r5		; speed
 
 ; 	; X Y Z
 		mov 	@(plyfld_z,r4),r1
@@ -326,9 +326,6 @@ master_loop:
 .free:
 		mov 	#1,r0
 		mov.w	r0,@(comm10,gbr)
-		mov.w 	@(comm2,gbr),r0
-		add 	#1,r0
-		mov.w 	r0,@(comm2,gbr)
 		bra	master_loop
 		nop
 		align 4
@@ -408,6 +405,19 @@ m_irq_pwm:
 		nop
 		nop
 		
+; ----------------------------------
+
+		mov.l	@(monowidth,gbr),r0
+		mov 	r0,r1
+		mov.b	@r1,r0				;is pwm fifo full?
+		tst	#$80,r0
+		bf	.exit
+; 		sts	pr,@-r15
+; 		bsr	PWM_Run
+; 		nop
+; 		lds	@r15+,pr
+.exit:
+
 ; ----------------------------------
 
 		rts
@@ -749,10 +759,11 @@ SH2_S_HotStart:
 		mov 	r1,@(mdl_data,r3)
 		mov 	#0,r0
 		mov 	r0,@(mdl_x,r3)
-		mov 	r0,@(mdl_y,r3)
-; 		mov 	#-$8000,r0
+		mov 	#-$10000,r0
 		mov 	r0,@(mdl_z,r3)
-
+		mov 	#-$4000,r0
+		mov 	r0,@(mdl_y,r3)
+		
 ; --------------------------------------------------------
 ; Loopf
 ; --------------------------------------------------------
@@ -795,9 +806,9 @@ slave_loop:
 		mov 	#0,r0
 		mov.w 	r0,@(comm10,gbr)
 		
-		mov.w 	@(comm4,gbr),r0
+		mov.w 	@(comm2,gbr),r0
 		add 	#1,r0
-		mov.w 	r0,@(comm4,gbr)
+		mov.w 	r0,@(comm2,gbr)
 		bra	slave_loop
 		nop
 		align 4

@@ -28,8 +28,14 @@ import sys
 SCALE_SIZE=0x100
 FROM_BLENDER=False #True
 img_width = 1
-TAG_NOMATERIAL = "MARSNULL"
-TAG_MARSCOLOR  = "MARSINDX"
+
+# normal names for textures
+TAG_NOMATERIAL	  = "MARSNULL"		# random color mode
+TAG_MARSCOLOR	  = "MARSINDX"		# set index color permanently
+TAG_MARSINDX_LIST = "MARSLIST"          # set index color in the material (for animated stuff)
+
+# tag for texture data in assembly
+TAG_TEXTUR        = "Textr_"
 
 # ======================================================================
 # -------------------------------------------------
@@ -64,7 +70,7 @@ solidcolor    = 1
 reading       = True
 vertex_list   = list()
 
-random_mode   = False
+random_mode   = True
 random_color  = 1
 indx_color    = 0
 mtrl_curr     = 0
@@ -79,6 +85,13 @@ while reading:
   text=model_file.readline()
   if text=="":
     reading=False
+
+  ## ---------------------------
+  ## vertices
+  ## ---------------------------
+  
+  #if text.find("o") == False:
+	  #print("OBJECT")
 
   # ---------------------------
   # vertices
@@ -166,12 +179,24 @@ while reading:
       use_img = False
       random_mode = True
       
-    # SOLID COLOR
+    # SOLID COLOR normal
     elif a == TAG_MARSCOLOR:
       a = mtlname.split("_")
       #out_mtrl.write("\t dc.l "+str(a[1])+","+str(0)+"\n")  <-- if needed
       #indx_color += 1
       indx_color = int(a[1])
+      print("Material: Color ID",indx_color)
+      #img_width = 1
+      #img_height = 1
+      has_img = False
+      use_img = False
+      random_mode = False
+
+    elif a == TAG_MARSINDX_LIST:
+      a = mtlname.split("_")
+      out_mtrl.write("\t dc.l "+str(a[1])+","+str(0)+"\n")
+      mtrl_curr = mtrl_index
+      mtrl_index += 1
       print("Material: Color ID",indx_color)
       #img_width = 1
       #img_height = 1
@@ -271,9 +296,9 @@ while reading:
                       has_img = False
                       random_mode = False
 
-                  out_mtrl.write("\t dc.l Textr_"+str(mtlname)+","+str(img_width)+"\n")
-                  #mtrl_curr = mtrl_index
-                  #mtrl_index += 1
+                  out_mtrl.write("\t dc.l "+str(TAG_TEXTUR)+str(mtlname)+","+str(img_width)+"\n")
+                  mtrl_curr = mtrl_index
+                  mtrl_index += 1
                   tex_file.close()
 
   # ---------------------------
@@ -288,7 +313,6 @@ while reading:
       y_curr=point[1].split("/")
       z_curr=point[2].split("/")
 
-      print(use_img)
       # Set material id and size
       if use_img == True:
         a = mtrl_curr

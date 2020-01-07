@@ -7,7 +7,6 @@
 
 TEST_PICTURPAL:	binclude "engine/data/mtrl/doremi_pal.bin"
 		align 4
-
 TEST_MODEL:
 		binclude "engine/data/cube_head.bin"
 		dc.l .vert,.face,.vrtx,.mtrl	; vertices, faces, vertex, material
