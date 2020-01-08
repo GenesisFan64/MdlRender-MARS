@@ -158,7 +158,7 @@ SH2_M_HotStart:
 
 master_loop:
 		mov	#MarsMdl_Playfld,r4
-		mov 	#$400*8,r5		; speed
+		mov 	#$400*4,r5		; speed
 
 ; 	; X Y Z
 		mov 	@(plyfld_z,r4),r1
@@ -302,7 +302,7 @@ master_loop:
 		sub 	r5,r1
 .no_b2:
 		mov 	r1,@(mdl_x_rot,r4)
-
+		
 ; -------------------------------------------
 ; Wait VBLANK
 ; -------------------------------------------
@@ -759,10 +759,11 @@ SH2_S_HotStart:
 		mov 	r1,@(mdl_data,r3)
 		mov 	#0,r0
 		mov 	r0,@(mdl_x,r3)
-		mov 	#-$10000,r0
-		mov 	r0,@(mdl_z,r3)
-		mov 	#-$4000,r0
 		mov 	r0,@(mdl_y,r3)
+; 		mov 	#-$50000,r0
+		mov 	r0,@(mdl_z,r3)
+; 		mov 	#-$4000,r0
+
 		
 ; --------------------------------------------------------
 ; Loopf
@@ -803,12 +804,12 @@ slave_loop:
 
 	; -----------------------------------
 	
-		mov 	#0,r0
-		mov.w 	r0,@(comm10,gbr)
-		
 		mov.w 	@(comm2,gbr),r0
 		add 	#1,r0
 		mov.w 	r0,@(comm2,gbr)
+		
+		mov 	#0,r0
+		mov.w 	r0,@(comm10,gbr)
 		bra	slave_loop
 		nop
 		align 4
@@ -1058,6 +1059,7 @@ SH2_Error:
 ; ----------------------------------------------------------------
 
 sin_table	binclude "system/mars/data/sinedata.bin"
+		align 4
 
 		include "system/mars/data.asm"
 

@@ -1,1 +1,1 @@
-	 dc.l Textr_TestTexture,512
+	 dc.l Textr_TestTexture,480

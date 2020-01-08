@@ -1,4 +1,4 @@
-# Blender MTL File: 'None'
+# Blender MTL File: 'link.blend'
 # Material Count: 1
 
 newmtl TestTexture
@@ -10,4 +10,4 @@ Ke 0.501961 0.501961 0.501961
 Ni 1.450000
 d 1.000000
 illum 1
-map_Kd /home/kevin/Desktop/dev/projects/MdlRender-MARS/engine/data/mtrl/tga/link.tga
+map_Kd /home/kevin/Desktop/dev/projects/MdlRender-MARS/engine/data/mtrl/tga/doremi.tga

@@ -9,11 +9,17 @@
 Engine_data:
 ; --------------------------------------------------------
 
-; 		include "engine/modes/title/data.asm"
+; Textr_uslogo:	binclude "engine/data/mtrl/logos.bin"
+; 		align 4
+; Textr_grass:	binclude "engine/data/mtrl/grass_art.bin"
+; 		align 4
+Textr_TestTexture:
+		binclude "engine/data/mtrl/doremi_art.bin"
+		align 4
 		
 ; ====================================================================
 
 Engine_data_end:
 	if MOMPASS=7
-		message "MD DATA uses: \{((Engine_data_end-Engine_data)&$FFFFF)}"
+		message "ROM DATA uses: \{((Engine_data_end-Engine_data)&$FFFFF)}"
 	endif

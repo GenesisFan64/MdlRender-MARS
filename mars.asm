@@ -87,6 +87,20 @@ MARS_RAMDATA_E:
 
 ; ====================================================================
 ; ----------------------------------------------------------------
+; 68000 ROM bank
+; ----------------------------------------------------------------
+
+; 		phase $900000+*
+; 		align 4
+; ; ---------------------------------------------
+; 		
+; 		dc.b "ROM BANK GOES HERE"
+; 		
+; ; ---------------------------------------------
+; 		dephase
+
+; ====================================================================
+; ----------------------------------------------------------------
 ; ROM data visible for SH2
 ; 
 ; this section will be
@@ -97,12 +111,8 @@ MARS_RAMDATA_E:
 		align 4
 ; ---------------------------------------------
 
-; Textr_uslogo:	binclude "engine/data/mtrl/logos.bin"
-; 		align 4
-; Textr_grass:	binclude "engine/data/mtrl/grass_art.bin"
-; 		align 4
 Textr_TestTexture:
-		binclude "engine/data/mtrl/rubia_art.bin"
+		binclude "engine/data/mtrl/doremi_art.bin"
 		align 4
 		
 ; ---------------------------------------------
@@ -114,4 +124,4 @@ Textr_TestTexture:
 ; ---------------------------------------------
 		
 ROM_END:
-		rompad (ROM_END&$FF0000)+$20000
+		rompad (ROM_END&$FF0000)+$10000
