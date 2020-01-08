@@ -158,7 +158,7 @@ SH2_M_HotStart:
 
 master_loop:
 		mov	#MarsMdl_Playfld,r4
-		mov 	#$100*4,r5		; speed
+		mov 	#$400*8,r5		; speed
 
 ; 	; X Y Z
 		mov 	@(plyfld_z,r4),r1
