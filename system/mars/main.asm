@@ -129,7 +129,7 @@ SH2_M_HotStart:
 		mov	#_CCR,r1
 		mov	#$19,r0
 		mov.w	r0,@r1
-		mov	#VIRQ_ON|CMDIRQ_ON,r0
+		mov	#PWMIRQ_ON|VIRQ_ON|CMDIRQ_ON,r0
     		mov.b	r0,@(intmask,gbr)
 		mov	#$20,r0
 		ldc	r0,sr
@@ -147,10 +147,29 @@ SH2_M_HotStart:
 ; Init
 ; --------------------------------------------------------
 
+		bsr	MarsSound_Init
+		nop
 		mov 	#TEST_PICTURPAL,r1
 		mov 	#256,r3
 		bsr	MarsVideo_LoadPal
 		mov 	#0,r2
+		
+; 		mov	#WAV_LEFT,r2
+; 		mov	#WAV_LEFT_e,r3
+; 		mov	r2,r4
+; 		mov	#0,r4
+; 		mov	#$200,r5
+; 		mov	#%10,r7
+; 		mov	#0,r6
+; 		bsr	MarsSound_SetChannel
+; 		mov	#0,r1
+; 		
+; 		mov	#WAV_RIGHT,r2
+; 		mov	#WAV_RIGHT_e,r3
+; 		mov	r2,r4
+; 		mov	#%01,r7
+; 		bsr	MarsSound_SetChannel
+; 		mov	#1,r1
 		
 ; --------------------------------------------------------
 ; Loop
@@ -407,16 +426,28 @@ m_irq_pwm:
 		
 ; ----------------------------------
 
-		mov.l	@(monowidth,gbr),r0
-		mov 	r0,r1
-		mov.b	@r1,r0				;is pwm fifo full?
-		tst	#$80,r0
-		bf	.exit
-; 		sts	pr,@-r15
-; 		bsr	PWM_Run
-; 		nop
-; 		lds	@r15+,pr
+  		mov.w	@(monowidth,gbr),r0
+  		shlr8	r0
+ 		tst	#$80,r0
+ 		bf	.exit
+		mov	r2,@-r15
+		mov	r3,@-r15
+		mov	r4,@-r15
+		mov	r5,@-r15
+		mov	r6,@-r15
+		mov	r7,@-r15
+		sts	pr,@-r15
+		bsr	MarsSound_PWM
+		nop
+		lds	@r15+,pr
+		mov	@r15+,r7
+		mov	@r15+,r6
+		mov	@r15+,r5
+		mov	@r15+,r4
+		mov	@r15+,r3
+		mov	@r15+,r2
 .exit:
+		nop
 
 ; ----------------------------------
 
@@ -723,7 +754,7 @@ SH2_S_HotStart:
 		mov.w	r0,@r1
 		mov	#CMDIRQ_ON,r0
     		mov.b	r0,@(intmask,gbr)
-		mov	#$20,r0
+		mov	#$F0,r0
 		ldc	r0,sr
 		mov.w	r0,@(pwmintclr,gbr)
 		mov.w	r0,@(pwmintclr,gbr)
@@ -738,8 +769,6 @@ SH2_S_HotStart:
 ; Init
 ; --------------------------------------------------------
 
-		bsr	MarsSound_Init
-		nop
 		bsr	MarsVideo_Init
 		nop
 		bsr	MarsMdl_Init
@@ -760,7 +789,7 @@ SH2_S_HotStart:
 		mov 	#0,r0
 		mov 	r0,@(mdl_x,r3)
 		mov 	r0,@(mdl_y,r3)
-; 		mov 	#-$50000,r0
+		mov 	#-$50000,r0
 		mov 	r0,@(mdl_z,r3)
 ; 		mov 	#-$4000,r0
 
@@ -906,28 +935,6 @@ s_irq_pwm:
 		
 ; ----------------------------------
 
-  		mov.w	@(monowidth,gbr),r0
-  		shlr8	r0
- 		tst	#$80,r0
- 		bf	.exit
-		mov	r2,@-r15
-		mov	r3,@-r15
-		mov	r4,@-r15
-		mov	r5,@-r15
-		mov	r6,@-r15
-		mov	r7,@-r15
-		sts	pr,@-r15
-		bsr	MarsSound_PWM
-		nop
-		lds	@r15+,pr
-		mov	@r15+,r7
-		mov	@r15+,r6
-		mov	@r15+,r5
-		mov	@r15+,r4
-		mov	@r15+,r3
-		mov	@r15+,r2
-.exit:
-		nop
 		rts
 		nop
 		align 4

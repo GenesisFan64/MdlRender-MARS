@@ -114,7 +114,10 @@ MARS_RAMDATA_E:
 Textr_TestTexture:
 		binclude "engine/data/mtrl/doremi_art.bin"
 		align 4
-		
+; WAV_LEFT:	binclude "L.wav",$28,$1C0000
+; WAV_LEFT_e:
+; WAV_RIGHT:	binclude "R.wav",$28,$1C0000
+; WAV_RIGHT_e:
 ; ---------------------------------------------
 		dephase
 

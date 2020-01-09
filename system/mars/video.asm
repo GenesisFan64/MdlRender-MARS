@@ -17,8 +17,8 @@
 
 MAX_POLYGONS		equ	2048
 MAX_MODELS		equ	64
-MAX_ZDIST_FAR		equ	-2048			; lower distance, more stable
-MAX_ZDIST_CNTR		equ	MAX_ZDIST_FAR-64
+MAX_ZDIST_FAR		equ	-3000			; lower distance, more stable
+MAX_ZDIST_CNTR		equ	MAX_ZDIST_FAR-128
 
 ; ----------------------------------------
 ; Variables
@@ -957,7 +957,7 @@ MarsMdl_Run:
 		mov	#MarsMdl_FaceCnt,r2	; Reset FACE counter
 		mov	#0,r0
 		mov	r0,@r2
-		mov.w	r0,@(comm6,gbr)
+		mov.w	r0,@(comm8,gbr)
 
 		mov 	#MarsMdl_Objects,r14
 .loop:
@@ -1193,9 +1193,9 @@ make_model:
 		mov	@r7,r0
 		add 	#1,r0
 		
-		mov.w 	@(comm6,gbr),r0		; FACE COUNTER
+		mov.w 	@(comm8,gbr),r0		; FACE COUNTER
 		add 	#1,r0
-		mov.w	r0,@(comm6,gbr)
+		mov.w	r0,@(comm8,gbr)
 		
 		mov 	#MAX_POLYGONS,r2
 		cmp/ge	r2,r0

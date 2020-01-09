@@ -27,7 +27,7 @@ sizeof_sndchn	ds.l 0
 MarsSound_Init:
 		sts	pr,@-r15
 
-		mov	#((((23011361<<1)/32000+1)>>1)+1),r0
+		mov	#((((23011361<<1)/16000+1)>>1)+1),r0	; 32000 works but it will slowdown painfully
 		mov.w	r0,@(cycle,gbr)
 		mov	#$0105,r0
 		mov.w	r0,@(timerctl,gbr)
@@ -67,6 +67,11 @@ MarsSound_Run:
 ; ----------------------------------------------------------------
 
 MarsSound_PWM:
+		mov	#CS3,r1
+		mov	@r1,r0
+		add 	#1,r0
+		mov	r0,@r1
+
 		mov	#MarsSnd_Pwm,r7
 		mov 	#1,r3			; LEFT
 		mov 	#1,r4			; RIGHT
@@ -164,8 +169,8 @@ MarsSound_PWM:
 ; r3 | End address
 ; r4 | Loop address (-1, dont loop)
 ; r5 | Pitch
-; r6 | Flags (Panning)
-; r7 | Volume
+; r6 | Volume
+; r7 | Flags (panning)
 ; --------------------------------------------------------
 
 MarsSound_SetChannel:
