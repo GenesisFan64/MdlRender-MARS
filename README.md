@@ -1,4 +1,7 @@
 # MdlRender-MARS
+
+**OBSOLETE, Restarted as Shinrinx-MARS https://github.com/GenesisFan64/Shinrinx-MARS **
+
 A 3D polygon renderer system for the Sega 32X
 
 Using video mode 1, 256-color indexed, supports triangles and quads simultaneously, materials supported are: solid colors and textures mixed, textures have unlimited width and height, the only limit is the ROM size
